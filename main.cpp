@@ -50,12 +50,13 @@ struct POIN
     double y;
 };
 
-// 0 = Bx + A - Cy
+// 0 = Ax - Cy + F
 struct LINFAC
 {
     double A;
+    double F;
     double B;
-    double C;
+
 };
 
 struct MILLPEDE
@@ -177,8 +178,8 @@ void DetermineLineEquation(MILLPEDE *T)
     if(T->P1.x == T->P2.x)
     {
         T->lin.A =  1;
-        T->lin.B = - T->P1.x;
-        T->lin.C =  0;
+        T->lin.F = - T->P1.x;
+        T->lin.B =  0;
     }
     else
     {
@@ -199,8 +200,8 @@ void DetermineLineEquation(MILLPEDE *T)
         else Intercept = T->P1.y - Slope * T->P1.x;
 
         T->lin.A = Slope;
-        T->lin.B = Intercept;
-        T->lin.C = -1;
+        T->lin.F = Intercept;
+        T->lin.B = -1;
 
     }
 
@@ -230,8 +231,8 @@ void DetermineCrossPoint(MILLPEDE *T1, MILLPEDE *T2)
     cout << "DetermineCrossPoint"  << endl;
     #endif // MODE_DEB
 
-    if(!(T1->lin.C)) cout << "ST1 NIE JEST FUNKCJA" << endl;
-    if(!(T2->lin.C)) cout << "ST2 NIE JEST FUNKCJA" << endl;
+    if(!(T1->lin.B)) cout << "ST1 NIE JEST FUNKCJA" << endl;
+    if(!(T2->lin.B)) cout << "ST2 NIE JEST FUNKCJA" << endl;
 
     if(T1->lin.A == T2->lin.A)
     {
@@ -517,7 +518,7 @@ int TEST_DetermineLineEquation( void )
 int TEST_DetermineLineEquation( void )
 {
 
-    int AmountOfTest = 8;
+    int AmountOfTest = 7;
     struct TESTTable
 {
     POIN P1;
@@ -532,15 +533,18 @@ int TEST_DetermineLineEquation( void )
     cout << endl;
 
     TESTTable TT[AmountOfTest] =
-                                { // 0 = Ax + B - Cy
-                                    10, 0,10,10,            1,           -10,  0,
-                                     0, 4, 0, 2,            1,             0,  0,
-                                     3, 4, 3,-2,            1,            -3,  0,
 
-                                    -1,-2, 1, 2,            2,             0, -1,
-                                    -4,-2,-1,-4, (double)-2/3, (double)-14/3, -1,
-                                    -1, 2, 9, 0, (double)-1/5, (double)  9/5, -1,
-                                     1, 1, 2, 2,            1,             0, -1
+                                {
+                                // 0 = Ax + B - Cy
+                                // Non Function Cases:
+                                10, 0,10,10,            1,           -10,  0,
+                                 0, 4, 0, 2,            1,             0,  0,
+                                 3, 4, 3,-2,            1,            -3,  0,
+                                // Function Cases:
+                                -1,-2, 1, 2,            2,             0, -1,
+                                -4,-2,-1,-4, (double)-2/3, (double)-14/3, -1,
+                                -1, 2, 9, 0, (double)-1/5, (double)  9/5, -1,
+                                 1, 1, 2, 2,            1,             0, -1
                                 };
 
 
@@ -557,9 +561,9 @@ int TEST_DetermineLineEquation( void )
         (
              (fabs(MILL.lin.A - TT[i].expected.A) <= 1e-10)
              &&
-             (fabs(MILL.lin.B - TT[i].expected.B) <= 1e-10)
+             (fabs(MILL.lin.F - TT[i].expected.F) <= 1e-10)
              &&
-             (fabs(MILL.lin.C - TT[i].expected.C) <= 1e-10)
+             (fabs(MILL.lin.B - TT[i].expected.B) <= 1e-10)
         )
         {
             TEST_PASS;
@@ -573,12 +577,12 @@ int TEST_DetermineLineEquation( void )
         cout << "  ||  ";
         cout << "P1("<<TT[i].P1.x<<","<<TT[i].P1.y<<")";
         cout << "P2("<<TT[i].P2.x<<","<<TT[i].P2.y<<")";
-        cout << "   ";
-        cout << "A: " << MILL.lin.A << " EXP: " << TT[i].expected.A;
-        cout << "   ";
-        cout << "B: " << MILL.lin.B << " EXP: " << TT[i].expected.B;
-        cout << "   ";
-        cout << "C: " << MILL.lin.C << " EXP: " << TT[i].expected.C;
+        cout << "    ";
+        cout << "Ax: " << MILL.lin.A << " EXP: " << TT[i].expected.A;
+        cout << "    ";
+        cout << "F:  " << MILL.lin.F << " EXP: " << TT[i].expected.F;
+        cout << "    ";
+        cout << "By:  " << MILL.lin.B << " EXP: " << TT[i].expected.B;
         cout << endl;
     }
     return 0;
