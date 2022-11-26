@@ -1,7 +1,7 @@
 #include <iostream>
 #include <algorithm>
 #include <math.h>
-#define MODE_DEB    0
+#define MODE_DEB    1
 #define MODE_TEST   1
 
 #define TEST_PASS   SetConsoleTextAttribute(hConsole,10);cout<<"PASS";SetConsoleTextAttribute(hConsole,7);
@@ -50,7 +50,7 @@ struct POIN
     double y;
 };
 
-// 0 = Ax - Cy + F
+// 0 = Ax - By + F
 struct LINFAC
 {
     double A;
@@ -134,42 +134,71 @@ void LoadData(MILLPEDE *ST1, MILLPEDE *ST2)
 
 int CheckMillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
 {
+
+
     DetermineLineEquation(ST1); // Determine line eqution for ST!
     DetermineLineEquation(ST2); // Determine line eqution for ST2
-    DetermineCrossPoint(ST1,ST2);
-    if(ST1->CrossPointExist == "YES")
+
+    if
+        (
+         ST1->lin.A == ST2->lin.A
+         &&
+         ST1->lin.B == ST2->lin.B
+         &&
+         ST1->lin.F == ST2->lin.F
+         )
     {
+        cout << "Case in progress";
+    }
+    else if
+        (
+         ST1->lin.A == ST2->lin.A
+         &&
+         ST1->lin.B == ST2->lin.B
+         &&
+         ST1->lin.F != ST2->lin.F
+         )
+    {
+
+    }
+    else
+    {
+
         DetermineCrossPoint(ST1,ST2);
 
-        DetermineCrossDirection(ST1);
-        if(ST1->CPdirection == pos)
+        if(ST1->CrossPointExist == "YES")
         {
-            DetermineCrossDirection(ST2);
-            if(ST2->CPdirection == pos)
+
+            DetermineCrossDirection(ST1);
+
+            if(ST1->CPdirection == pos)
             {
-                DetermineCrossTimes(ST1);
-                DetermineCrossTimes(ST2);
-                DetermineOverleap(ST1,ST2);
-                if(overleapExist_YES == ST1->TimesOverleap)
-                {
-                    return collisionYES;
-                }
-                else
-                {
-                    return collisionNO;
-                }
+                DetermineCrossDirection(ST2);
+
+                    if(ST2->CPdirection == pos)
+                    {
+                        DetermineCrossTimes(ST1);
+                        DetermineCrossTimes(ST2);
+                        DetermineOverleap(ST1,ST2);
+
+                        if(overleapExist_YES == ST1->TimesOverleap)
+                            return collisionYES;
+                        else
+                            return collisionNO;
+                    }
+                else return collisionNO;
             }
             else return collisionNO;
         }
-        else return collisionNO;
-    }
     else return collisionNO;
+    }
 }
 
 void DetermineLineEquation(MILLPEDE *T)
 {
     #if MODE_DEB == 1
-    cout << "DetermineLineEquation"  << endl;
+    cout << "                     "  << endl;
+    cout << "DetermineLineEquation";
     #endif // MODE_DEB
 
 
@@ -207,11 +236,12 @@ void DetermineLineEquation(MILLPEDE *T)
 
 
     #if MODE_DEB == 1
-    cout << endl;
-    cout << "A Slope      : " << T->lin.A << endl;
-    cout << "B Intercept  : " << T->lin.B << endl;
-    cout << "C            : " << T->lin.C << endl;
-    cout << "B calculation: " << T->P1.y <<"-"<< T->lin.A <<"*"<< T->P1.x<< endl;
+    cout << " >> (A,B,C): " <<
+    "("  << T->lin.A <<
+    ","  << T->lin.B <<
+    ","  << T->lin.F <<
+    ")"  << endl;
+    //cout << "B_: " << T->P1.y <<"-"<< T->lin.A <<"*"<< T->P1.x<< endl;
     #endif // MODE_DEB
 }
 
@@ -228,11 +258,12 @@ int DetermineIntersectionScenario(MILLPEDE *ST1, MILLPEDE *ST2)
 void DetermineCrossPoint(MILLPEDE *T1, MILLPEDE *T2)
 {
     #if MODE_DEB == 1
-    cout << "DetermineCrossPoint"  << endl;
+    cout << "                   " << endl;
+    cout << "DetermineCrossPoint";
     #endif // MODE_DEB
 
-    if(!(T1->lin.B)) cout << "ST1 NIE JEST FUNKCJA" << endl;
-    if(!(T2->lin.B)) cout << "ST2 NIE JEST FUNKCJA" << endl;
+    //if(!(T1->lin.B)) cout << "ST1 NIE JEST FUNKCJA" << endl;
+    //if(!(T2->lin.B)) cout << "ST2 NIE JEST FUNKCJA" << endl;
 
     if(T1->lin.A == T2->lin.A)
     {
@@ -252,6 +283,12 @@ void DetermineCrossPoint(MILLPEDE *T1, MILLPEDE *T2)
                                                   /
                                        (T2->linea - T1->linea);
     }
+
+
+
+    #if MODE_DEB == 1
+    cout << " >> CP: (" << T1->CrossPoint.x <<","<<T1->CrossPoint.y <<")" << endl << endl;
+    #endif // MODE_DEB
 }
 
 // trzeba policzyć który z punktów P1,P2 jest bliżej punktu CP,
@@ -266,7 +303,8 @@ void DetermineCrossPoint(MILLPEDE *T1, MILLPEDE *T2)
 void DetermineCrossDirection(MILLPEDE *T)
 {
     #if MODE_DEB == 1
-    cout << "DetermineCrossDirection" << endl;
+    cout << "                       " << endl;
+    cout << "DetermineCrossDirection";
     #endif // MODE_DEB
 
     double cpp1,cpp2;
@@ -279,30 +317,35 @@ void DetermineCrossDirection(MILLPEDE *T)
     else                   cout << endl << "FATAL ERROR" << endl;
 
 
+    #if MODE_DEB == 1
+    cout << " >> Direction: ";
+    if      (T->CPdirection = pos) cout << "positive"       << endl;
+    else if (T->CPdirection = neg) cout << "negative"       << endl;
+    else                           cout << "FATAL ERRor"    << endl;
+    #endif // MODE_DEB
+
 
 }
 
 void DetermineCrossTimes(MILLPEDE *T)
 {
     #if MODE_DEB == 1
+    cout << "                   "  << endl;
     cout << "DetermineCrossTimes"  << endl;
     #endif // MODE_DEB
-
 
     // t=s/v
     double S1;
     double S2;
 
     #if MODE_DEB == 1
-
-    cout << endl;
-    cout << endl;
-    cout << "DEBOUG DATA: " << endl;
-    cout << "P1:   (" << T->P1.x         <<","<< T->P1.y         << ")" << endl;
-    cout << "P2:   (" << T->P2.x         <<","<< T->P2.y         << ")" << endl;
-    cout << "CP:   (" << T->CrossPoint.x <<","<< T->CrossPoint.y << ")" << endl;
-    cout << "Speed: " << T->speed << endl;
+    //cout << "DEBOUG DATA: " << endl;
+    //cout << "P1:   (" << T->P1.x         <<","<< T->P1.y         << ")" << endl;
+    //cout << "P2:   (" << T->P2.x         <<","<< T->P2.y         << ")" << endl;
+    //cout << "CP:   (" << T->CrossPoint.x <<","<< T->CrossPoint.y << ")" << endl;
+    //cout << "Speed: " << T->speed << endl;
     #endif // MODE_DEB
+
 
 
     S1 =   sqrt
@@ -339,32 +382,37 @@ void DetermineCrossTimes(MILLPEDE *T)
     //TODO
     // SPEED == 0
     #if MODE_DEB == 1
-    cout << endl;
+    cout << "-----------------------------"  << endl;
     cout << "S1: " << S1 << endl;
     cout << "S2: " << S2 << endl;
     if(S1>S2)
     {
-    cout << "CrossTimeStart: " << T->CrossTimeStart << endl;
-    cout << "Calc: " << S2<<"/"<<T->speed << endl;
-    cout << "CrossTimeEnd: " << T->CrossTimeEnd << endl;
-    cout << "Calc: " << S1<<"/"<< T->speed;
+    cout << "CrossTimeStart:          >> "  << T->CrossTimeStart << endl;
+    cout << "Calc: " << S2<<"/"<<T->speed   << endl;
+    cout << "CrossTimeEnd:            >> "  << T->CrossTimeEnd << endl;
+    cout << "Calc: " << S1<<"/"<<T->speed   << endl;
     }
     if(S1<S2)
     {
-    cout << "CrossTimeStart: " << T->CrossTimeStart << endl;
-    cout << "Calc: " << S1<<"/"<<T->speed << endl;
-    cout << "CrossTimeEnd: " << T->CrossTimeEnd << endl;
-    cout << "Calc: " << S2<<"/"<< T->speed;
+    cout << "CrossTimeStart:          >> "  <<T->CrossTimeStart << endl;
+    cout << "Calc: " << S1<<"/" <<T->speed          << endl;
+    cout << "CrossTimeEnd:            >> "  <<T->CrossTimeEnd   << endl;
+    cout << "Calc: " << S2<<"/" <<T->speed          << endl;
     }
+    cout << "-----------------------------"  << endl;
     cout << endl;
     #endif // MODE_DEB
+
+
+
 
 }
 
 void DetermineOverleap(MILLPEDE *T1, MILLPEDE *T2)
 {
     #if MODE_DEB == 1
-    cout << "DetermineOverleap"  << endl;
+    cout << "                 " << endl;
+    cout << "DetermineOverleap";
     #endif // MODE_DEB
 
     if(T1->CrossTimeStart < T2->CrossTimeStart)
@@ -412,8 +460,13 @@ void DetermineOverleap(MILLPEDE *T1, MILLPEDE *T2)
         T2->TimesOverleap = overleapExist_YES;
     }
 
-
-
+    #if MODE_DEB == 1
+    if(overleapExist_YES == T1->TimesOverleap)
+        cout << " >> overleap_YES" << endl;
+    if(overleapExist_NO == T1->TimesOverleap)
+        cout << " >> overleap_NO" << endl;
+        cout << endl;
+    #endif // MODE_DEB
 
 }
 
@@ -443,12 +496,12 @@ void TerminalSettings(void){
 void TestScenarioSettings()
 {
     #if MODE_TEST == 1
-    TEST_DetermineLineEquation();
+    //TEST_DetermineLineEquation();
     TEST_DetermineCrossPoint();
-    TEST_DetermineCrossDirection();
-    TEST_DetermineCrossTimes();
-    TEST_DetermineOverleap();
-    TEST_CheckMillipedeCollision();
+    //TEST_DetermineCrossDirection();
+    //TEST_DetermineCrossTimes();
+    //TEST_DetermineOverleap();
+    //TEST_CheckMillipedeCollision();
     #endif // MODE_TEST
 }
 /*
@@ -596,12 +649,12 @@ int TEST_DetermineCrossPoint(void)
     struct TESTTable
 
 {
-    POIN    ST1P1;
-    POIN    ST1P2;
-    POIN    ST2P1;
-    POIN    ST2P2;
+    POIN    S1P1;
+    POIN    S1P2;
+    POIN    S2P1;
+    POIN    S2P2;
     string  Expected_CrossPointExist;
-    POIN   Expected_CP;
+    POIN    Expected_CP;
 
 };
 
@@ -636,15 +689,37 @@ int TEST_DetermineCrossPoint(void)
 
     for(int i=0; i<AmountOfTest; i++)
     {
+
+        #if MODE_DEB == 1
+        cout <<                            endl;
+        cout <<                            endl;
+        cout << "    ST1(P1)(P2) >> "
+             << "(" << TT[i].S1P1.x << "," << TT[i].S1P1.y << ")"
+             << "(" << TT[i].S1P2.x << "," << TT[i].S1P2.y << ")" << endl;
+        cout << "    ST2(P1)(P2) >> "
+             << "(" << TT[i].S2P1.x << "," << TT[i].S2P1.y << ")"
+             << "(" << TT[i].S2P2.x << "," << TT[i].S2P2.y << ")" << endl;
+        cout << "    ------------------------------" << endl;
+        #endif // MODE_DEB
+
+
         MILLPEDE MILL1;
         MILLPEDE MILL2;
+
+        MILL1.P1 = TT[i].S1P1;
+        MILL1.P2 = TT[i].S1P2;
+        MILL2.P1 = TT[i].S2P1;
+        MILL2.P2 = TT[i].S2P2;
+
+        DetermineLineEquation(&MILL1);
+        DetermineLineEquation(&MILL2);
 
         DetermineCrossPoint(&MILL1, &MILL2);
 
         cout << "TC" << i+1 << ": ";
 
         if
-        (        (MILL1.CrossPointExist == TT[i].Expected_CrossPointExist)
+        (    (MILL1.CrossPointExist == TT[i].Expected_CrossPointExist)
                 &&
              (fabs(MILL1.CrossPoint.x    - TT[i].Expected_CP.x) <=1e-10)
                 &&
@@ -667,11 +742,11 @@ int TEST_DetermineCrossPoint(void)
         cout << endl;
 
         #if MODE_DEB == 1
-        cout << "x:      "<<MILL1.CrossPoint.x << TT[i].Expected_CP.x << endl;
-        cout << "logicx: "<<(fabs(MILL1.CrossPoint.x    - TT[i].Expected_CP.x) <=1e-10) << endl;
-        cout << "fabs:   "<<fabs(MILL1.CrossPoint.y    - TT[i].Expected_CP.y) << endl;
-        cout << "y:      "<<MILL1.CrossPoint.y << TT[i].Expected_CP.y << endl;
-        cout << "logicx: "<< (fabs(MILL1.CrossPoint.x    - TT[i].Expected_CP.x) <=1e-10) << endl;
+        //cout << "x:      "<<MILL1.CrossPoint.x << TT[i].Expected_CP.x << endl;
+        //cout << "logicx: "<<(fabs(MILL1.CrossPoint.x    - TT[i].Expected_CP.x) <=1e-10) << endl;
+        //cout << "fabs:   "<<fabs(MILL1.CrossPoint.y    - TT[i].Expected_CP.y) << endl;
+        //cout << "y:      "<<MILL1.CrossPoint.y << TT[i].Expected_CP.y << endl;
+        //cout << "logicx: "<< (fabs(MILL1.CrossPoint.x    - TT[i].Expected_CP.x) <=1e-10) << endl;
         #endif // MODE_DEB
 
 
@@ -908,15 +983,15 @@ int TEST_CheckMillipedeCollision(void)
     int AmountOfTest = 19;
     struct TESTTable
 {
-    double p11x;
-    double p11y;
-    double p12x;
-    double p12y;
+    double S1P1x;
+    double S1P1y;
+    double S1P2x;
+    double S1P2y;
     double speed1;
-    double p21x;
-    double p21y;
-    double p22x;
-    double p22y;
+    double S2P1x;
+    double S2P1y;
+    double S2P2x;
+    double S2P2y;
     double speed2;
     int expected_CollisionState;
     string TestDescriptions;
@@ -924,7 +999,7 @@ int TEST_CheckMillipedeCollision(void)
     TESTTable TT[AmountOfTest] =
     {
         2,  0,  0,  0,  1,    // TC 1
-        4, -2,  4, -4,  1, collisionYES, "kolizja - przeciecie po czasie",
+        4, -2,  4, -4,  1, collisionYES, "TC101 kolizja - przeciecie po czasie",
 
        -1,  2, -3,  2,  2,   //  TC 2
         2,  1,  2, -4,  1, collisionYES,"brak",
@@ -1005,16 +1080,34 @@ int TEST_CheckMillipedeCollision(void)
         MILLPEDE MILL1;
         MILLPEDE MILL2;
 
-        MILL1.P1.x  = TT[i].p11x;
-        MILL1.P1.y  = TT[i].p11y;
-        MILL1.P2.x  = TT[i].p12x;
-        MILL1.P2.y  = TT[i].p12y;
+        MILL1.P1.x  = TT[i].S1P1x;
+        MILL1.P1.y  = TT[i].S1P1y;
+        MILL1.P2.x  = TT[i].S1P2x;
+        MILL1.P2.y  = TT[i].S1P2y;
         MILL1.speed = TT[i].speed1;
-        MILL2.P1.x  = TT[i].p21x;
-        MILL2.P1.y  = TT[i].p21y;
-        MILL2.P2.x  = TT[i].p22x;
-        MILL2.P2.y  = TT[i].p22y;
+        MILL2.P1.x  = TT[i].S2P1x;
+        MILL2.P1.y  = TT[i].S2P1y;
+        MILL2.P2.x  = TT[i].S2P2x;
+        MILL2.P2.y  = TT[i].S2P2y;
         MILL2.speed = TT[i].speed1;
+
+        #if MODE_DEB == 1
+        cout << endl;
+        cout << endl;
+        cout << "==================================" << endl;
+        cout << " DEBOUG_TC: " << i+1                << endl;
+        cout << "==================================" << endl;
+        cout <<                            endl;
+        cout << "    ST1(P1)(P2) >> "
+             << "(" << TT[i].S1P1x << "," << TT[i].S1P1y << ")"
+             << "(" << TT[i].S1P2x << "," << TT[i].S1P2y << ")" << endl;
+        cout << "    ST2(P1)(P2) >> "
+             << "(" << TT[i].S2P1x << "," << TT[i].S2P1y << ")"
+             << "(" << TT[i].S2P2x << "," << TT[i].S2P2y << ")" << endl;
+        cout << "    ------------------------------" << endl;
+        cout << endl;
+        #endif // MODE_DEB
+
 
         int ret=1;
         ret = CheckMillipedeCollision(&MILL1, &MILL2);
