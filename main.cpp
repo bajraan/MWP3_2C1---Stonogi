@@ -1,8 +1,12 @@
 #include <iostream>
 #include <algorithm>
 #include <math.h>
-#define MODE_DEB    1
-#define MODE_TEST   1
+#define MODE_DEB     0
+#define MODE_TEST    1
+#define PRINT_RAPORT 0
+
+// PUNKT PRZECIĘCIA LEŻY W STARCIE STONOGI!
+// DETERMINE COLLISIONTIMES
 
 #define TEST_PASS   SetConsoleTextAttribute(hConsole,10);cout<<"PASS";SetConsoleTextAttribute(hConsole,7);
 #define TEST_FAIL   SetConsoleTextAttribute(hConsole,12);cout<<"FAIL";SetConsoleTextAttribute(hConsole,7);
@@ -11,6 +15,10 @@
 #include <windows.h>
 HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif // MODE_TEST
+
+#if PRINT_RAPORT == 1
+#include /printraporttohtml.cpp
+#endif // PRINT_RAPORT
 
 // TODO
 // PUNKT PRZECIĘCIE WEWNĄTRZ POZYCJI STARTOWEJ
@@ -44,6 +52,12 @@ enum TimesOverleap
     overleapExist_YES
 };
 
+enum BelongsToInitial
+{
+
+    CrossPointBelongsToInitial_FALSE,
+    CrossPointBelongsToInitial__TRUE
+};
 struct POIN
 {
     double x;
@@ -64,12 +78,11 @@ struct MILLPEDE
     POIN    P1;
     POIN    P2;
     double  speed;
-    double  linea;
-    double  lineb;
     LINFAC  lin;
     string  CrossPointExist;
     POIN    CrossPoint;
     int     CPdirection;
+    int     CPbelongsToInitial;
     double  CrossTimeStart;
     double  CrossTimeEnd;
     int     TimesOverleap;
@@ -81,14 +94,15 @@ int CheckMillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2);
 int DetermineIntersectionScenario(MILLPEDE *ST1, MILLPEDE *ST2);
 void DetermineLineEquation(MILLPEDE *ST);
 void DetermineCrossPoint(MILLPEDE *T1, MILLPEDE *T2);
+int CheckIfCrossPointBelongsToMillipedeForInitial(MILLPEDE *T1);
 void DetermineCrossDirection(MILLPEDE *T1);
 void DetermineCrossTimes(MILLPEDE *T1);
 void DetermineOverleap(MILLPEDE *T1, MILLPEDE *T2);
 
 int TEST_CheckMillipedeCollision(void);
-int TEST_DETAILED_CheckMillipedeCollision(void);
 int TEST_DetermineLineEquation(void);
 int TEST_DetermineCrossPoint(void);
+int TEST_CheckIfCrossPointBelongsToMillipedeForInitial(void);
 int TEST_DetermineCrossDirection(void);
 int TEST_DetermineCrossTimes(void);
 int TEST_DetermineOverleap(void);
@@ -159,7 +173,7 @@ int CheckMillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
          ST1->lin.F != ST2->lin.F
          )
     {
-
+        return collisionNO;
     }
     else
     {
@@ -169,26 +183,40 @@ int CheckMillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
         if(ST1->CrossPointExist == "YES")
         {
 
-            DetermineCrossDirection(ST1);
+            CheckIfCrossPointBelongsToMillipedeForInitial(ST1);
+            if
+            (
+            CrossPointBelongsToInitial_FALSE
+            ==
+            ST1->CPbelongsToInitial
+            )
+            {
+                DetermineCrossDirection(ST1);
+                if(neg == ST1->CPdirection ) return collisionNO;
+            }
 
-            if(ST1->CPdirection == pos)
+
+            CheckIfCrossPointBelongsToMillipedeForInitial(ST2);
+            if
+            (
+            CrossPointBelongsToInitial_FALSE
+            ==
+            ST2->CPbelongsToInitial
+            )
             {
                 DetermineCrossDirection(ST2);
-
-                    if(ST2->CPdirection == pos)
-                    {
-                        DetermineCrossTimes(ST1);
-                        DetermineCrossTimes(ST2);
-                        DetermineOverleap(ST1,ST2);
-
-                        if(overleapExist_YES == ST1->TimesOverleap)
-                            return collisionYES;
-                        else
-                            return collisionNO;
-                    }
-                else return collisionNO;
+                if(neg == ST2->CPdirection ) return collisionNO;
             }
-            else return collisionNO;
+
+            DetermineCrossTimes(ST1);
+            DetermineCrossTimes(ST2);
+
+            DetermineOverleap(ST1,ST2);
+
+            if(overleapExist_YES == ST1->TimesOverleap)
+                    return collisionYES;
+            else
+                    return collisionNO;
         }
     else return collisionNO;
     }
@@ -203,12 +231,19 @@ void DetermineLineEquation(MILLPEDE *T)
 
 
 
-
+    // LINIA PIONOWA
     if(T->P1.x == T->P2.x)
     {
         T->lin.A =  1;
         T->lin.F = - T->P1.x;
         T->lin.B =  0;
+    }
+    // LINIA POZIOMA
+    else if(T->P1.y == T->P2.y)
+    {
+        T->lin.A = 0;
+        T->lin.F = T->P1.y;
+        T->lin.B = -1;
     }
     else
     {
@@ -262,8 +297,7 @@ void DetermineCrossPoint(MILLPEDE *T1, MILLPEDE *T2)
     cout << "DetermineCrossPoint";
     #endif // MODE_DEB
 
-    //if(!(T1->lin.B)) cout << "ST1 NIE JEST FUNKCJA" << endl;
-    //if(!(T2->lin.B)) cout << "ST2 NIE JEST FUNKCJA" << endl;
+    POIN CrossPoint;
 
     if(T1->lin.A == T2->lin.A)
     {
@@ -275,20 +309,38 @@ void DetermineCrossPoint(MILLPEDE *T1, MILLPEDE *T2)
         T1->CrossPointExist = "YES";
         T2->CrossPointExist = "YES";
 
-        T1->CrossPoint.x = (T1->lineb - T2->lineb)
-                                /
-                    (T2->linea - T1->linea);
 
-        T1->CrossPoint.y = (T2->linea * T1->lineb - T2->lineb * T1->linea )
-                                                  /
-                                       (T2->linea - T1->linea);
+    CrossPoint.x =
+        (T1->lin.F - T2->lin.F)
+                   /
+        (T2->lin.A - T1->lin.A);
+
+    CrossPoint.y =
+        (T2->lin.A * T1->lin.F - T2->lin.F * T1->lin.A )
+                               /
+                    (T2->lin.A - T1->lin.A);
+
+    T1->CrossPoint.x = CrossPoint.x;
+    T1->CrossPoint.y = CrossPoint.y;
+    T2->CrossPoint.x = CrossPoint.x;
+    T2->CrossPoint.y = CrossPoint.y;
+
     }
-
-
-
     #if MODE_DEB == 1
     cout << " >> CP: (" << T1->CrossPoint.x <<","<<T1->CrossPoint.y <<")" << endl << endl;
     #endif // MODE_DEB
+}
+
+int CheckIfCrossPointBelongsToMillipedeForInitial(MILLPEDE *T)
+{
+    if
+    (
+        max(T->P1.x,T->P2.x) >= T->CrossPoint.x && T->CrossPoint.x >= min(T->P1.x,T->P2.x)
+        &&
+        max(T->P1.y,T->P2.y) >= T->CrossPoint.y && T->CrossPoint.y >= min(T->P1.y,T->P2.y)
+    )
+         return T->CPbelongsToInitial = CrossPointBelongsToInitial__TRUE;
+    else return T->CPbelongsToInitial = CrossPointBelongsToInitial_FALSE;
 }
 
 // trzeba policzyć który z punktów P1,P2 jest bliżej punktu CP,
@@ -319,12 +371,10 @@ void DetermineCrossDirection(MILLPEDE *T)
 
     #if MODE_DEB == 1
     cout << " >> Direction: ";
-    if      (T->CPdirection = pos) cout << "positive"       << endl;
-    else if (T->CPdirection = neg) cout << "negative"       << endl;
+    if      (pos == T->CPdirection) cout << "positive"       << endl;
+    else if (neg == T->CPdirection) cout << "negative"       << endl;
     else                           cout << "FATAL ERRor"    << endl;
     #endif // MODE_DEB
-
-
 }
 
 void DetermineCrossTimes(MILLPEDE *T)
@@ -346,8 +396,6 @@ void DetermineCrossTimes(MILLPEDE *T)
     //cout << "Speed: " << T->speed << endl;
     #endif // MODE_DEB
 
-
-
     S1 =   sqrt
            (
            pow(T->P1.x - T->CrossPoint.x ,2)
@@ -361,7 +409,6 @@ void DetermineCrossTimes(MILLPEDE *T)
            +
            pow(T->P2.y - T->CrossPoint.y ,2)
            );
-
 
     if(S1<S2)
     {
@@ -379,10 +426,20 @@ void DetermineCrossTimes(MILLPEDE *T)
         cout << "Wrong input data!";
     }
 
+    if(CrossPointBelongsToInitial__TRUE == T->CPbelongsToInitial)
+    {
+        T->CrossTimeStart = 0;
+        T->CrossTimeEnd   = S2/T->speed;
+    }
+
+
     //TODO
     // SPEED == 0
+    // PUNKT PRZECIĘCIA LEŻY W STARCIE STONOGI!
     #if MODE_DEB == 1
     cout << "-----------------------------"  << endl;
+    cout << "P1: (" << T->P1.x << "," << T->P1.y << ")" << endl;
+    cout << "P2: (" << T->P2.x << "," << T->P2.y << ")" << endl;
     cout << "S1: " << S1 << endl;
     cout << "S2: " << S2 << endl;
     if(S1>S2)
@@ -496,12 +553,13 @@ void TerminalSettings(void){
 void TestScenarioSettings()
 {
     #if MODE_TEST == 1
-    //TEST_DetermineLineEquation();
+    TEST_DetermineLineEquation();
     TEST_DetermineCrossPoint();
-    //TEST_DetermineCrossDirection();
-    //TEST_DetermineCrossTimes();
-    //TEST_DetermineOverleap();
-    //TEST_CheckMillipedeCollision();
+    TEST_CheckIfCrossPointBelongsToMillipedeForInitial();
+    TEST_DetermineCrossDirection();
+    TEST_DetermineCrossTimes();
+    TEST_DetermineOverleap();
+    TEST_CheckMillipedeCollision();
     #endif // MODE_TEST
 }
 /*
@@ -571,7 +629,7 @@ int TEST_DetermineLineEquation( void )
 int TEST_DetermineLineEquation( void )
 {
 
-    int AmountOfTest = 7;
+    int AmountOfTest = 11;
     struct TESTTable
 {
     POIN P1;
@@ -589,11 +647,17 @@ int TEST_DetermineLineEquation( void )
 
                                 {
                                 // 0 = Ax + B - Cy
+                                //     A    F   B
                                 // Non Function Cases:
+
+                                 0, 2, 0, 4,            1,             0,  0,
                                 10, 0,10,10,            1,           -10,  0,
                                  0, 4, 0, 2,            1,             0,  0,
                                  3, 4, 3,-2,            1,            -3,  0,
                                 // Function Cases:
+                                 2, 0, 4, 0,           0,              0, -1,
+                                 2,10, 4,10,           0,            +10, -1,
+                                 2,-5, 4,-5,           0,             -5, -1,
                                 -1,-2, 1, 2,            2,             0, -1,
                                 -4,-2,-1,-4, (double)-2/3, (double)-14/3, -1,
                                 -1, 2, 9, 0, (double)-1/5, (double)  9/5, -1,
@@ -631,12 +695,15 @@ int TEST_DetermineLineEquation( void )
         cout << "P1("<<TT[i].P1.x<<","<<TT[i].P1.y<<")";
         cout << "P2("<<TT[i].P2.x<<","<<TT[i].P2.y<<")";
         cout << "    ";
-        cout << "Ax: " << MILL.lin.A << " EXP: " << TT[i].expected.A;
-        cout << "    ";
-        cout << "F:  " << MILL.lin.F << " EXP: " << TT[i].expected.F;
-        cout << "    ";
-        cout << "By:  " << MILL.lin.B << " EXP: " << TT[i].expected.B;
-        cout << endl;
+
+        cout << "(A,B,C): EXP: ("
+             << TT[i].expected.A << ","
+             << TT[i].expected.B << ","
+             << TT[i].expected.F << ")";
+        cout << "  OBS: ("
+             << MILL.lin.A << ","
+             << MILL.lin.B << ","
+             << MILL.lin.F << ")" << endl;
     }
     return 0;
 }
@@ -754,6 +821,62 @@ int TEST_DetermineCrossPoint(void)
     return 0;
 }
 
+int TEST_CheckIfCrossPointBelongsToMillipedeForInitial(void)
+{
+    struct TESTTable
+{
+    POIN P1;
+    POIN P2;
+    POIN CP;
+    int expected_result;
+};
+    cout <<                                                                         endl;
+    cout << " >>> "                                                             <<  endl;
+    cout << " >>> TEST FOR: CheckIfCrossPointBelongsToMillipedeForInitial() "   <<  endl;
+    cout << " >>> "                                                             <<  endl;
+    cout <<                                                                         endl;
+
+    int AmountOfTest = 6;
+    TESTTable TT[AmountOfTest] =
+
+    {
+
+    //--------+--------+-------------------------------------------+
+    //   P1   |   P2   |   CP   |           Expected result        |
+    //        |        |        |                                  |
+         0,  0,   0,  6,   0,  3, CrossPointBelongsToInitial__TRUE ,
+         0,  0,   6,  0,   3,  0, CrossPointBelongsToInitial__TRUE ,
+         0,  0,   0,  6,   0, 10, CrossPointBelongsToInitial_FALSE ,
+         0,  0,   6,  0,  10,  0, CrossPointBelongsToInitial_FALSE ,
+         0,  0,   1,  1, 100,100, CrossPointBelongsToInitial_FALSE ,
+        -1, -1,   1, -1,   0, -1, CrossPointBelongsToInitial__TRUE
+    };
+
+    for(int i=0; i<AmountOfTest; i++)
+    {
+        MILLPEDE MILL;
+
+        MILL.P1          = TT[i].P1;
+        MILL.P2          = TT[i].P2;
+        MILL.CrossPoint  = TT[i].CP;
+
+
+        CheckIfCrossPointBelongsToMillipedeForInitial(&MILL);
+
+        cout << "TC" <<i<<": ";
+
+        if(MILL.CPbelongsToInitial == TT[i].expected_result)
+        {
+            TEST_PASS;
+        }
+        else
+        {
+            TEST_FAIL;
+        }
+        cout << endl;
+    }
+}
+
 int TEST_DetermineCrossDirection(void)
 {
    struct TESTTable
@@ -769,19 +892,23 @@ int TEST_DetermineCrossDirection(void)
     cout << " >>> "                                      << endl;
     cout <<                                                 endl;
 
-    int AmountOfTest = 9;
-    TESTTable TT[AmountOfTest] =   {    //-1,-2, 1, 2,          -2,             0,
-                                        // 3, 4, 3,-2,           0,             0,
-                                        //-4,-2,-1,-4,(double) 2/3, (double)-14/3,
-                                          -1, 2, 9, 0,          10,           -0.2, neg,
-                                          -1, 2, 9, 0,          20,          9/5-4, neg,
-                                          -1, 2, 9, 0,         -20,          9/5+4, pos,
-                                           1, 1, 2, 2,           0,              0, pos,
-                                           1, 1, 2, 2,        -111,           -111, pos,
-                                           1, 1, 2, 2,      -60000,         -60000, pos,
-                                           1, 1, 2, 2,           3,              3, neg,
-                                          -1,-2, 1, 2,           2,              4, neg,
-                                          -1,-2, 1, 2,          -2,             -4, pos     };
+    int AmountOfTest = 10;
+    TESTTable TT[AmountOfTest] =
+
+    {
+
+    -1, 2, 9, 0,           10,           -0.2, neg,
+    -1, 2, 9, 0,           20,          9/5-4, neg,
+    -1, 2, 9, 0,          -20,          9/5+4, pos,
+     1, 1, 2, 2,            0,              0, pos,
+     1, 1, 2, 2,         -111,           -111, pos,
+     1, 1, 2, 2,       -60000,         -60000, pos,
+     1, 1, 2, 2,            3,              3, neg,
+    -1,-2, 1, 2,            2,              4, neg,
+    -1,-2, 1, 2,           -2,             -4, pos,
+    -4, 0,-2,-2,    -0.818182,       -3.18182, neg
+
+    };
 
 
 
@@ -799,7 +926,6 @@ int TEST_DetermineCrossDirection(void)
 
 
         DetermineCrossDirection(&MILL);
-
 
         cout << "TC" <<i<<": ";
 
@@ -834,21 +960,27 @@ int TEST_DetermineCrossTimes(void)
 {
     POIN P1;
     POIN P2;
-    int direction;
     double speed;
     POIN CP;
+    int  CPbelongsToInitial;
     double expected_CrossStart;
     double expected_CrossEnd;
+
 };
 
+
+
     int AmountOfTest = 6;
-    TESTTable TT[AmountOfTest] =   {     1, 0, 0, 0,pos  ,              1,        2,  0,  1,  2,
-                                        -1,-2, 1, 2,pos  ,(double)sqrt(5),        2,  4,  1,  3,
-                                         4, 3, 4,-1,pos  ,              2,        4,  5,  1,  3,
-                                         3, 2, 1, 2,pos  ,              1,        4,  2,  1,  3,
-                                        -2, 2,-6,-2,pos  ,(double)sqrt(8),        0,  4,  1,  3,
-                                       100, 0,200,0,pos  ,              1,        0,  0,100,200
-                                         };
+    TESTTable TT[AmountOfTest] =
+
+    {
+          1, 0,  0, 0,              1,        2,  0, CrossPointBelongsToInitial_FALSE,  1,  2,
+         -1,-2,  1, 2,(double)sqrt(5),        2,  4, CrossPointBelongsToInitial_FALSE,  1,  3,
+          4, 3,  4,-1,              2,        4,  5, CrossPointBelongsToInitial_FALSE,  1,  3,
+          3, 2,  1, 2,              1,        4,  2, CrossPointBelongsToInitial_FALSE,  1,  3,
+         -2, 2, -6,-2,(double)sqrt(8),        0,  4, CrossPointBelongsToInitial_FALSE,  1,  3,
+        100, 0,200, 0,              1,        0,  0, CrossPointBelongsToInitial_FALSE,100,200
+    };
 
 
     cout << endl;
@@ -861,11 +993,12 @@ int TEST_DetermineCrossTimes(void)
     for(int i=0; i<AmountOfTest; i++)
     {
 
-        MILLPEDE MILL;
-        MILL.P1         = TT[i].P1;
-        MILL.P2         = TT[i].P2;
-        MILL.CrossPoint = TT[i].CP;
-        MILL.speed      = TT[i].speed;
+      MILLPEDE MILL;
+      MILL.P1                 = TT[i].P1;
+      MILL.P2                 = TT[i].P2;
+      MILL.CrossPoint         = TT[i].CP;
+      MILL.speed              = TT[i].speed;
+      MILL.CPbelongsToInitial = TT[i].CPbelongsToInitial;
 
         DetermineCrossTimes(&MILL);
 
@@ -932,7 +1065,8 @@ int TEST_DetermineOverleap(void)
 
 
                                          2,  3,  0,  2, overleapExist_YES ,
-                                        70, 75, 80, 85, overleapExist_NO
+                                        70, 75, 80, 85, overleapExist_NO,
+
                                     };
 
 
@@ -980,7 +1114,7 @@ int TEST_DetermineOverleap(void)
 
 int TEST_CheckMillipedeCollision(void)
 {
-    int AmountOfTest = 19;
+    int AmountOfTest = 20;
     struct TESTTable
 {
     double S1P1x;
@@ -1013,52 +1147,58 @@ int TEST_CheckMillipedeCollision(void)
        -4, 0, -2,  -2,  1,   //  TC 5
         1, -1, -4,  -7, 1, collisionNO,"brak",
 
-    -4.52, 6.28,  4.3,  3.64,  0.01,   //  TC 6
+       -2, -2, -4,   0, 1,   //  TC 6
+        1, -1, -4,  -7, 1, collisionYES,"Zderzenie = punkt zderzenia w miejscu startu drugiej stonogi",
+
+       -2, -2, -4,   0,99,   //  TC 7
+        1, -1, -4,  -7, 1, collisionYES,"Zderzenie = punkt zderzenia w miejscu startu drugiej stonogi, pocisk",
+
+    -4.52, 6.28,  4.3,  3.64,  0.01,   //  TC 8
     -4.67, 3.43,-6.49,  1.73,     1, collisionYES,"kolizja - przeciecie po czasie",
 
-    -4.52, 6.28,  4.3,  3.64,  0.5,   //  TC7
+    -4.52, 6.28,  4.3,  3.64,  0.5,   //  TC9
     -4.67, 3.43,-6.49,  1.73,   200, collisionYES,"kolizja - przeciecie po czasie" ,
 
-    -4.52, 6.28,  4.3,  3.64,    50,   //  TC8
+    -4.52, 6.28,  4.3,  3.64,    50,   //  TC10
     -4.67, 3.43,-6.49,  1.73,     1, collisionNO,"przeciecie trajektorii - przeciwny kierunek ???",
 
-    -4.52, 6.28,  4.3,  3.64,  0.01,   //  TC9
+    -4.52, 6.28,  4.3,  3.64,  0.01,   //  TC11
     -6.49, 1.73,-4.67,  3.43,     1, collisionNO,"przeciecie trajektorii - przeciwny kierunek ???",
 
-        0,    2,    0,     0,    10,   //  TC10
+        0,    2,    0,     0,    10,   //  TC12
         2,    2,    2,     0,     1, collisionNO,"brak przeciecia Trajektorie rownolegle pionowe",
 
-        3,    3,   -3,     3,   100,  //  TC11
+        3,    3,   -3,     3,   100,  //  TC13
         3,   -3,   -3,   -3.,    10, collisionNO,"brak przeciecia Trajektorie rownloegle poziome",
 
 //==============================================================================================================
 // TRAJEKTORIE POZIOME NAKŁADAJĄCE SIĘ
 //==============================================================================================================
-       -1,    1,   -2,     1,     1, //  TC12
+       -1,    1,   -2,     1,     1, //  TC14
         1,    1,    2,     1,     1, collisionYES,"     KOL - Trajektorie POZIOME sie nakladaja, zderzenie czolowe po czasie 1",
 
-       -2,    1,   -1,     1,     1, //  TC13
+       -2,    1,   -1,     1,     1, //  TC15
         1,    1,    2,     1,     1, collisionNO, "BRAK KOL - Trajektorie POZIOME sie nakladaja, poruszanie w lewe ze stala predkoscia",
 
-       -2,    1,   -1,     1,     1, //  TC14
+       -2,    1,   -1,     1,     1, //  TC16
         1,    1,    2,     1,     2, collisionYES,"     KOL - Trajektorie POZIOME sie nakladaja, ST2 dogoni ST1",
 
-       -2,    1,   -1,     1,     1, //  TC15
+       -2,    1,   -1,     1,     1, //  TC17
         1,    1,    2,     1,   0.5, collisionNO, "BRAK KOL - Trajektorie POZIOME sie nakladaja, ST2 dogoni ST1",
 
 //==============================================================================================================
 // TRAJEKTORIE PIONOWE NAKŁADAJĄCE SIĘ
 //==============================================================================================================
-        0,    1,    0,     2,     1, //  TC16 // kolizja w CP (0,0) po czasie 1
+        0,    1,    0,     2,     1, //  TC18 // kolizja w CP (0,0) po czasie 1
         0,   -1,    0,    -2,     1, collisionYES,"     KOL - Trajektorie PIONOWE sie nakladaja, zderzenie czolowe po czasie 1",
 
-        0,    1,    0,     2,     1, //  TC17
+        0,    1,    0,     2,     1, //  TC19
         0,   -2,    0,    -1,     1, collisionNO, "BRAK KOL - Trajektorie PIONOWE sie nakladaja, poruszanie w dol ze stala predkoscia",
 
-        0,    1,    0,     2,     2, //  TC18 // kolizja w CP (0,3) po czasie 2
+        0,    1,    0,     2,     2, //  TC20 // kolizja w CP (0,3) po czasie 2
         0,   -2,    0,    -1,     1, collisionYES, "     KOL - Trajektorie PIONOWE sie nakladaja, kol w CP(0,3) po 2s || ST1 dogoniła ST2",
 
-        0,    1,    0,     2,   0.3, //  TC19 //
+        0,    1,    0,     2,   0.3, //  TC21 //
         0,   -2,    0,    -1,     1, collisionNO, "BRAK  KOL - Trajektorie PIONOWE sie nakladaja, ST1 nigdy nie dogini ST@",
 
 
@@ -1089,7 +1229,7 @@ int TEST_CheckMillipedeCollision(void)
         MILL2.P1.y  = TT[i].S2P1y;
         MILL2.P2.x  = TT[i].S2P2x;
         MILL2.P2.y  = TT[i].S2P2y;
-        MILL2.speed = TT[i].speed1;
+        MILL2.speed = TT[i].speed2;
 
         #if MODE_DEB == 1
         cout << endl;
