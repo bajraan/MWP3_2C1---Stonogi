@@ -236,36 +236,43 @@ void DetermineLineEquation(MILLPEDE *T)
     if(T->P1.x == T->P2.x)
     {
         T->lin.A =  1;
-        T->lin.F = - T->P1.x;
         T->lin.B =  0;
+        T->lin.F = -T->P1.x;
     }
     // LINIA POZIOMA
     else if(T->P1.y == T->P2.y)
     {
         T->lin.A = 0;
-        T->lin.F = T->P1.y;
-        T->lin.B = -1;
+        T->lin.B = 1;
+        T->lin.F = -T->P1.y;
+
     }
     else
     {
+
         double Slope;
         double Intercept;
+
     //
-    // SLOPE // a
+    // SLOPE // Ax
     //
 
         if(0 == (max(T->P1.y, T->P2.y) - min(T->P1.y, T->P2.y))) Slope = 0;
         else Slope = (T->P2.y - T->P1.y) / (T->P2.x - T->P1.x);
+        T->lin.A = Slope;
 
     //
-    // INTERCEPT // b
+    // INTERCEPT // F
     //
 
         if(0 == Slope) Intercept = T->P1.x;
         else Intercept = T->P1.y - Slope * T->P1.x;
-
-        T->lin.A = Slope;
         T->lin.F = Intercept;
+
+    //
+    // By
+    //
+
         T->lin.B = -1;
 
     }
@@ -287,9 +294,11 @@ int DetermineIntersectionScenario(MILLPEDE *ST1, MILLPEDE *ST2)
 }
 
 //
-//x = (b1 - b2)/(a2 - a1);
 //
-//y = (a2 * b1 - b2 * a1) / (a2 - a1);
+//
+// https://www.geeksforgeeks.org/point-of-intersection-of-two-lines-formula/
+//
+//
 //
 void DetermineCrossPoint(MILLPEDE *T1, MILLPEDE *T2)
 {
@@ -298,7 +307,7 @@ void DetermineCrossPoint(MILLPEDE *T1, MILLPEDE *T2)
     cout << "DetermineCrossPoint";
     #endif // MODE_DEB
 
-    POIN CrossPoint;
+    POIN CP;
 
     if(T1->lin.A == T2->lin.A)
     {
@@ -310,21 +319,26 @@ void DetermineCrossPoint(MILLPEDE *T1, MILLPEDE *T2)
         T1->CrossPointExist = "YES";
         T2->CrossPointExist = "YES";
 
+    CP.x =
+        (T1->lin.B * T2->lin.F - T2->lin.B * T1->lin.F)
+                               /
+        (T1->lin.A *T2->lin.B  - T2->lin.A * T1->lin.B );
 
-    CrossPoint.x =
-        (T1->lin.F - T2->lin.F)
-                   /
-        (T2->lin.A - T1->lin.A);
 
-    CrossPoint.y =
+    CP.y =
         (T2->lin.A * T1->lin.F - T2->lin.F * T1->lin.A )
                                /
                     (T2->lin.A - T1->lin.A);
 
-    T1->CrossPoint.x = CrossPoint.x;
-    T1->CrossPoint.y = CrossPoint.y;
-    T2->CrossPoint.x = CrossPoint.x;
-    T2->CrossPoint.y = CrossPoint.y;
+    CP.y =
+        (T1->lin.F * T2->lin.A - T2->lin.F * T1->lin.A)
+                               /
+        (T1->lin.A *T2->lin.B  - T2->lin.A * T1->lin.B );
+
+    T1->CrossPoint.x = CP.x;
+    T1->CrossPoint.y = CP.y;
+    T2->CrossPoint.x = CP.x;
+    T2->CrossPoint.y = CP.y;
 
     }
     #if MODE_DEB == 1
