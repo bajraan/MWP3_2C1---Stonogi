@@ -86,7 +86,6 @@ struct MILLPEDE
     double  CrossTimeStart;
     double  CrossTimeEnd;
     int     TimesOverleap;
-
 };
 
 
@@ -98,6 +97,7 @@ int CheckIfCrossPointBelongsToMillipedeForInitial(MILLPEDE *T1);
 void DetermineCrossDirection(MILLPEDE *T1);
 void DetermineCrossTimes(MILLPEDE *T1);
 void DetermineOverleap(MILLPEDE *T1, MILLPEDE *T2);
+
 
 int TEST_CheckMillipedeCollision(void);
 int TEST_DetermineLineEquation(void);
@@ -111,6 +111,7 @@ int TEST_DetermineOverleap(void);
 void LoadData(MILLPEDE *ST1, MILLPEDE *ST2);
 void TerminalSettings(void);
 void TestScenarioSettings(void);
+
 
 int main()
 {
@@ -552,13 +553,13 @@ void TerminalSettings(void){
 void TestScenarioSettings()
 {
     #if MODE_TEST == 1
-    //TEST_DetermineLineEquation();
+    TEST_DetermineLineEquation();
     TEST_DetermineCrossPoint();
-    //TEST_CheckIfCrossPointBelongsToMillipedeForInitial();
-    //TEST_DetermineCrossDirection();
-    //TEST_DetermineCrossTimes();
-    //TEST_DetermineOverleap();
-    //TEST_CheckMillipedeCollision();
+    TEST_CheckIfCrossPointBelongsToMillipedeForInitial();
+    TEST_DetermineCrossDirection();
+    TEST_DetermineCrossTimes();
+    TEST_DetermineOverleap();
+    TEST_CheckMillipedeCollision();
     #endif // MODE_TEST
 }
 /*
