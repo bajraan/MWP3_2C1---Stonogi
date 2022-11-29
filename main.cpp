@@ -68,8 +68,8 @@ struct POIN
 struct LINFAC
 {
     double A;
-    double F;
     double B;
+    double C;
 
 };
 
@@ -160,7 +160,7 @@ int CheckMillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
          &&
          ST1->lin.B == ST2->lin.B
          &&
-         ST1->lin.F == ST2->lin.F
+         ST1->lin.C == ST2->lin.C
          )
     {
         cout << "Case in progress";
@@ -171,7 +171,7 @@ int CheckMillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
          &&
          ST1->lin.B == ST2->lin.B
          &&
-         ST1->lin.F != ST2->lin.F
+         ST1->lin.C != ST2->lin.C
          )
     {
         return collisionNO;
@@ -237,14 +237,14 @@ void DetermineLineEquation(MILLPEDE *T)
     {
         T->lin.A =  1;
         T->lin.B =  0;
-        T->lin.F = -T->P1.x;
+        T->lin.C = -T->P1.x;
     }
     // LINIA POZIOMA
     else if(T->P1.y == T->P2.y)
     {
         T->lin.A = 0;
         T->lin.B = 1;
-        T->lin.F = -T->P1.y;
+        T->lin.C = -T->P1.y;
 
     }
     else
@@ -267,7 +267,7 @@ void DetermineLineEquation(MILLPEDE *T)
 
         if(0 == Slope) Intercept = T->P1.x;
         else Intercept = T->P1.y - Slope * T->P1.x;
-        T->lin.F = Intercept;
+        T->lin.C = Intercept;
 
     //
     // By
@@ -282,7 +282,7 @@ void DetermineLineEquation(MILLPEDE *T)
     cout << " >> (A,B,C): " <<
     "("  << T->lin.A <<
     ","  << T->lin.B <<
-    ","  << T->lin.F <<
+    ","  << T->lin.C <<
     ")"  << endl;
     //cout << "B_: " << T->P1.y <<"-"<< T->lin.A <<"*"<< T->P1.x<< endl;
     #endif // MODE_DEB
@@ -320,18 +320,18 @@ void DetermineCrossPoint(MILLPEDE *T1, MILLPEDE *T2)
         T2->CrossPointExist = "YES";
 
     CP.x =
-        (T1->lin.B * T2->lin.F - T2->lin.B * T1->lin.F)
+        (T1->lin.B * T2->lin.C - T2->lin.B * T1->lin.C)
                                /
         (T1->lin.A *T2->lin.B  - T2->lin.A * T1->lin.B );
 
 
     CP.y =
-        (T2->lin.A * T1->lin.F - T2->lin.F * T1->lin.A )
+        (T2->lin.A * T1->lin.C - T2->lin.C * T1->lin.A )
                                /
                     (T2->lin.A - T1->lin.A);
 
     CP.y =
-        (T1->lin.F * T2->lin.A - T2->lin.F * T1->lin.A)
+        (T1->lin.C * T2->lin.A - T2->lin.C * T1->lin.A)
                                /
         (T1->lin.A *T2->lin.B  - T2->lin.A * T1->lin.B );
 
@@ -567,12 +567,12 @@ void TerminalSettings(void){
 void TestScenarioSettings()
 {
     #if MODE_TEST == 1
-    TEST_DetermineLineEquation();
-    TEST_DetermineCrossPoint();
-    TEST_CheckIfCrossPointBelongsToMillipedeForInitial();
-    TEST_DetermineCrossDirection();
-    TEST_DetermineCrossTimes();
-    TEST_DetermineOverleap();
+    //TEST_DetermineLineEquation();
+    //TEST_DetermineCrossPoint();
+    //TEST_CheckIfCrossPointBelongsToMillipedeForInitial();
+    //TEST_DetermineCrossDirection();
+    //TEST_DetermineCrossTimes();
+    //TEST_DetermineOverleap();
     TEST_CheckMillipedeCollision();
     #endif // MODE_TEST
 }
@@ -657,26 +657,37 @@ int TEST_DetermineLineEquation( void )
     cout << " >>> " << endl;
     cout << endl;
 
-    TESTTable TT[AmountOfTest] =
+    TESTTable TT[AmountOfTest] = {
 
-                                {
-                                // 0 = Ax + B - Cy
-                                //     A    F   B
-                                // Non Function Cases:
+	// linia pionowa
+    //----------------| |-----------------|
+    //        |       | | Expected LINFAC |
+    //  P1    |  P2   | |  A  |  B  |  C  |
+    //        |       | |     |     |     |
+          0, 2,   0, 4,      1,    0,    0,
+         10, 0,  10,10,      1,    0,  -10,
+          0, 4,   0, 2,      1,    0,    0,
+          3, 4,   3,-2,      1,    0,   -3,
 
-                                 0, 2, 0, 4,            1,             0,  0,
-                                10, 0,10,10,            1,           -10,  0,
-                                 0, 4, 0, 2,            1,             0,  0,
-                                 3, 4, 3,-2,            1,            -3,  0,
-                                // Function Cases:
-                                 2, 0, 4, 0,           0,              0, -1,
-                                 2,10, 4,10,           0,            +10, -1,
-                                 2,-5, 4,-5,           0,             -5, -1,
-                                -1,-2, 1, 2,            2,             0, -1,
-                                -4,-2,-1,-4, (double)-2/3, (double)-14/3, -1,
-                                -1, 2, 9, 0, (double)-1/5, (double)  9/5, -1,
-                                 1, 1, 2, 2,            1,             0, -1
-                                };
+	// linia pozioma
+    //----------------| |-----------------|
+    //        |       | | Expected LINFAC |
+    //  P1    |  P2   | |  A  |  B  |  C  |
+    //        |       | |     |     |     |
+          2, 0, 4, 0,        0,    1,    0,
+          2,10, 4,10,        0,    1,  -10,
+          2,-5, 4,-5,        0,    1,    5,
+
+	// linia skosna
+    //----------------| |-------------------------------|
+    //        |       | | Expected LINFAC               |
+    //  P1    |  P2   | |      A      | B |      C      |
+    //        |       | |             |   |             |
+         -1,-2, 1, 2,                2, -1,            0,
+         -4,-2,-1,-4,     (double)-2/3, -1,(double)-14/3,
+         -1, 2, 9, 0,     (double)-1/5, -1,(double)  9/5,
+          1, 1, 2, 2,                1, -1,            0
+    };
 
 
     for(int i=0; i<AmountOfTest; i++)
@@ -692,7 +703,7 @@ int TEST_DetermineLineEquation( void )
         (
              (fabs(MILL.lin.A - TT[i].expected.A) <= 1e-10)
              &&
-             (fabs(MILL.lin.F - TT[i].expected.F) <= 1e-10)
+             (fabs(MILL.lin.C - TT[i].expected.C) <= 1e-10)
              &&
              (fabs(MILL.lin.B - TT[i].expected.B) <= 1e-10)
         )
@@ -713,11 +724,11 @@ int TEST_DetermineLineEquation( void )
         cout << "(A,B,C): EXP: ("
              << TT[i].expected.A << ","
              << TT[i].expected.B << ","
-             << TT[i].expected.F << ")";
+             << TT[i].expected.C << ")";
         cout << "  OBS: ("
              << MILL.lin.A << ","
              << MILL.lin.B << ","
-             << MILL.lin.F << ")" << endl;
+             << MILL.lin.C << ")" << endl;
     }
     return 0;
 }
@@ -1136,6 +1147,10 @@ int TEST_CheckMillipedeCollision(void)
 };
     TESTTable TT[AmountOfTest] =
     {
+//=========================================================
+//        |        |       |  exp        |
+//   P1   |   P2   | speed |  collision  |  Descriptions
+//        |        |       |             |
         2,  0,  0,  0,  1,    // TC 1
         4, -2,  4, -4,  1, collisionYES, "TC101 kolizja - przeciecie po czasie",
 
@@ -1157,67 +1172,73 @@ int TEST_CheckMillipedeCollision(void)
         0,  1, -1,   1, 1,   //  TC 7
         1,  0,  1,  -1, 1, collisionYES,"Zderzenie po 1 sek, proste prostopadle",
 
-        1,  2, 0,   2, 1,   //  TC 888
-        2,  0,  2,  1, 1, collisionYES,"Zderzenie po 1 sek, proste prostopadle",
+        1,  2,  0,   2, 1,   //  TC 8
+        2,  1,  2,   0, 1, collisionYES,"Zderzenie po 1 sek, proste prostopadle",
 
-       -2, -2, -4,   0,99,   //  TC
+       -2, -2, -4,   0,99,   //  TC 9
         1, -1, -4,  -7, 1, collisionYES,"Zderzenie = punkt zderzenia w miejscu startu drugiej stonogi, pocisk",
 
-    -4.52, 6.28,  4.3,  3.64,  0.01,   //  TC 9
+    -4.52, 6.28,  4.3,  3.64,  0.01, //TC10
     -4.67, 3.43,-6.49,  1.73,     1, collisionYES,"kolizja - przeciecie po czasie",
 
-    -4.52, 6.28,  4.3,  3.64,  0.5,   //  TC10
+    -4.52, 6.28,  4.3,  3.64,  0.5,  //TC11
     -4.67, 3.43,-6.49,  1.73,   200, collisionYES,"kolizja - przeciecie po czasie" ,
 
-    -4.52, 6.28,  4.3,  3.64,    50,   //  TC11
+    -4.52, 6.28,  4.3,  3.64,    50, //TC12
     -4.67, 3.43,-6.49,  1.73,     1, collisionNO,"przeciecie trajektorii - przeciwny kierunek ???",
 
-    -4.52, 6.28,  4.3,  3.64,  0.01,   //  TC12
+    -4.52, 6.28,  4.3,  3.64,  0.01, //TC13
     -6.49, 1.73,-4.67,  3.43,     1, collisionNO,"przeciecie trajektorii - przeciwny kierunek ???",
 
-        0,    2,    0,     0,    10,   //  TC13
+        0,    2,    0,     0,    10, //TC14
         2,    2,    2,     0,     1, collisionNO,"brak przeciecia Trajektorie rownolegle pionowe",
 
-        3,    3,   -3,     3,   100,  //  TC14
+        3,    3,   -3,     3,   100, //TC15
         3,   -3,   -3,   -3.,    10, collisionNO,"brak przeciecia Trajektorie rownloegle poziome",
 
-//==============================================================================================================
-// TRAJEKTORIE POZIOME NAKŁADAJĄCE SIĘ
-//==============================================================================================================
-       -1,    1,   -2,     1,     1, //  TC15
-        1,    1,    2,     1,     1, collisionYES,"     KOL - Trajektorie POZIOME sie nakladaja, zderzenie czolowe po czasie 1",
+//|==============================================================================================================|
+//| TRAJEKTORIE POZIOME NAKŁADAJĄCE SIĘ                                                                          |
+//|==============================================================================================================|
+//|        |        |       |  exp        |                                                                      |
+//|   P1   |   P2   | speed |  collision  |  Descriptions                                                        |
+//|        |        |       |             |                                                                      |
+     -1,1  , -2,1   ,   1   , //TC16
+      1,1  ,  2,1   ,   1   , collisionYES,"     KOL - Trajektorie POZIOME sie nakladaja, zderzenie czolowe po czasie 1",
 
-       -2,    1,   -1,     1,     1, //  TC16
-        1,    1,    2,     1,     1, collisionNO, "BRAK KOL - Trajektorie POZIOME sie nakladaja, poruszanie w lewe ze stala predkoscia",
+     -2,1  ,  -1,1  ,   1   , //TC17
+      1,1  ,   2,1  ,   1   , collisionNO, "BRAK KOL - Trajektorie POZIOME sie nakladaja, poruszanie w lewe ze stala predkoscia",
 
-       -2,    1,   -1,     1,     1, //  TC17
-        1,    1,    2,     1,     2, collisionYES,"     KOL - Trajektorie POZIOME sie nakladaja, ST2 dogoni ST1",
+     -2,1  ,  -1,1  ,   1   , //TC18
+      1,1  ,   2,1  ,   2   , collisionYES,"     KOL - Trajektorie POZIOME sie nakladaja, ST2 dogoni ST1",
 
-       -2,    1,   -1,     1,     1, //  TC18
-        1,    1,    2,     1,   0.5, collisionNO, "BRAK KOL - Trajektorie POZIOME sie nakladaja, ST2 dogoni ST1",
+     -2,1  ,  -1,1  ,   1   , //TC19
+      1,1  ,   2,1  ,  0.5  , collisionNO, "BRAK KOL - Trajektorie POZIOME sie nakladaja, ST2 dogoni ST1",
 
 //==============================================================================================================
 // TRAJEKTORIE PIONOWE NAKŁADAJĄCE SIĘ
 //==============================================================================================================
-        0,    1,    0,     2,     1, //  TC19 // kolizja w CP (0,0) po czasie 1
-        0,   -1,    0,    -2,     1, collisionYES,"     KOL - Trajektorie PIONOWE sie nakladaja, zderzenie czolowe po czasie 1",
+//        |        |       |  exp        |
+//   P1   |   P2   | speed |  collision  |  Descriptions
+//        |        |       |             |
+    0, 1  ,  0, 2  ,   1   , //TC20 // kolizja w CP (0,0) po czasie 1
+    0,-1  ,  0,-2  ,   1   , collisionYES,"     KOL - Trajektorie PIONOWE sie nakladaja, zderzenie czolowe po czasie 1",
 
-        0,    1,    0,     2,     1, //  TC20
-        0,   -2,    0,    -1,     1, collisionNO, "BRAK KOL - Trajektorie PIONOWE sie nakladaja, poruszanie w dol ze stala predkoscia",
+    0, 1  ,  0, 2  ,   1   , //TC21 //
+    0,-2  ,  0,-1  ,   1   , collisionNO, "BRAK KOL - Trajektorie PIONOWE sie nakladaja, poruszanie w dol ze stala predkoscia",
 
-        0,    1,    0,     2,     2, //  TC21 // kolizja w CP (0,3) po czasie 2
-        0,   -2,    0,    -1,     1, collisionYES, "     KOL - Trajektorie PIONOWE sie nakladaja, kol w CP(0,3) po 2s || ST1 dogoniła ST2",
+    0, 1  ,  0, 2  ,   2   , //TC22 // kolizja w CP (0,3) po czasie 2
+    0,-2  ,  0,-1  ,   1   , collisionYES, "     KOL - Trajektorie PIONOWE sie nakladaja, kol w CP(0,3) po 2s || ST1 dogoniła ST2",
 
-        0,    1,    0,     2,   0.3, //  TC22 //
-        0,   -2,    0,    -1,     1, collisionNO, "BRAK  KOL - Trajektorie PIONOWE sie nakladaja, ST1 nigdy nie dogini ST@",
+    0, 1  ,  0, 2  ,  0.3  , //TC23 //
+    0,-2  ,  0,-1  ,   1   , collisionNO, "BRAK  KOL - Trajektorie PIONOWE sie nakladaja, ST1 nigdy nie dogini ST@",
 //==============================================================================================================
 // KOLIZJA SKOŚNA, KOLIZJA GRANICZNA (KONIC Z POCZĄTKIEM)
 //==============================================================================================================
-//        |       |       |  exp        |
-//   P1   |   P2  | speed |  collision  |  Descriptions
-//        |       |       |             |
-     0,  0,  -1, 1,      1, // TC23
-     0,  1,  1,  2,      1, collisionYES,"KOLIZJA SKOŚNA, KOLIZJA GRANICZNA (KONIC Z POCZĄTKIEM)"
+//        |        |       |  exp        |
+//   P1   |   P2   | speed |  collision  |  Descriptions
+//        |        |       |             |
+     0,0  ,  -1,1  ,   1   , // TC24
+     0,1  ,   1,2  ,   1   , collisionYES,"KOLIZJA SKOŚNA, KOLIZJA GRANICZNA (KONIC Z POCZĄTKIEM)"
 
     };
 
