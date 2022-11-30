@@ -21,8 +21,6 @@ HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif // PRINT_RAPORT
 
 // TODO
-// PUNKT PRZECIĘCIE WEWNĄTRZ POZYCJI STARTOWEJ
-// speed = 0;
 // proste pokrywające się zderzenie dczołowe
 
 using namespace std;
@@ -54,10 +52,16 @@ enum TimesOverleap
 
 enum BelongsToInitial
 {
-
     CrossPointBelongsToInitial_FALSE,
     CrossPointBelongsToInitial__TRUE
 };
+
+enum CollisionPointbelongstoPlayZone
+{
+    CollisionPointbelongstoPlayZone_NO,
+    CollisionPointbelongstoPlayZone_YES
+};
+
 struct POIN
 {
     double x;
@@ -89,11 +93,44 @@ struct MILLPEDE
 };
 
 
+//
+//  Collision params
+//
+
+//
+// DEFINICJA OBSZARU GRY
+//
+struct PLG
+{
+    POIN    PL1;
+    POIN    PL2;
+    POIN    PL3;
+    POIN    PL4;
+
+    int Max;
+    int Min;
+
+}PlayZone
+
+    // OBSZAR GRY W UKŁADZIE WSPOLZEDNYCH
+
+    {-100000, 100000,      100000, 100000,
+
+     -100000,-100000,      100000,-100000,
+
+
+        -100000,
+        100000
+
+     };
+
+
 int CheckMillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2);
 int DetermineIntersectionScenario(MILLPEDE *ST1, MILLPEDE *ST2);
 void DetermineLineEquation(MILLPEDE *ST);
 void DetermineCrossPoint(MILLPEDE *T1, MILLPEDE *T2);
-int CheckIfCrossPointBelongsToMillipedeForInitial(MILLPEDE *T1);
+int CHECK_IF_CollisionPointbelongstoPlayZone(MILLPEDE *T1, PLG *PlayZone);
+int CHECK_IF_CrossPointBelongsToMillipedeForInitial(MILLPEDE *T1);
 void DetermineCrossDirection(MILLPEDE *T1);
 void DetermineCrossTimes(MILLPEDE *T1);
 void DetermineOverleap(MILLPEDE *T1, MILLPEDE *T2);
@@ -115,11 +152,15 @@ void TestScenarioSettings(void);
 
 int main()
 {
+
+
     TerminalSettings();
     TestScenarioSettings();
 
     MILLPEDE ST1;
     MILLPEDE ST2;
+
+
 
     int Cases;
     cin >> Cases;
@@ -184,7 +225,7 @@ int CheckMillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
         if(ST1->CrossPointExist == "YES")
         {
 
-            CheckIfCrossPointBelongsToMillipedeForInitial(ST1);
+            CHECK_IF_CrossPointBelongsToMillipedeForInitial(ST1);
             if
             (
             CrossPointBelongsToInitial_FALSE
@@ -197,7 +238,7 @@ int CheckMillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
             }
 
 
-            CheckIfCrossPointBelongsToMillipedeForInitial(ST2);
+            CHECK_IF_CrossPointBelongsToMillipedeForInitial(ST2);
             if
             (
             CrossPointBelongsToInitial_FALSE
@@ -346,7 +387,30 @@ void DetermineCrossPoint(MILLPEDE *T1, MILLPEDE *T2)
     #endif // MODE_DEB
 }
 
-int CheckIfCrossPointBelongsToMillipedeForInitial(MILLPEDE *T)
+int CHECK_IF_CollisionPointbelongstoPlayZone(MILLPEDE *T, PLG *PlayZone)
+{
+
+    if(
+
+       PlayZone->Min <= T->CrossPoint.x
+       &&
+       PlayZone->Max >= T->CrossPoint.x
+       &&
+       PlayZone->Min <= T->CrossPoint.y
+       &&
+       PlayZone->Max >= T->CrossPoint.y
+
+       )
+    {
+        return CollisionPointbelongstoPlayZone_YES;
+    }
+    else
+    {
+        return CollisionPointbelongstoPlayZone_NO;
+    }
+}
+
+int CHECK_IF_CrossPointBelongsToMillipedeForInitial(MILLPEDE *T)
 {
     if
     (
@@ -425,6 +489,7 @@ void DetermineCrossTimes(MILLPEDE *T)
            pow(T->P2.y - T->CrossPoint.y ,2)
            );
 
+
     if(S1<S2)
     {
         T->CrossTimeStart = S1/T->speed;
@@ -445,6 +510,7 @@ void DetermineCrossTimes(MILLPEDE *T)
         T->CrossTimeStart = 0;
         T->CrossTimeEnd   = S2/T->speed;
     }
+
 
 
     //TODO
@@ -542,11 +608,16 @@ void DetermineOverleap(MILLPEDE *T1, MILLPEDE *T2)
 }
 
 //
+//
+//
+//
 //===============================================================
 // FUNKCJE TESTUJ¥CE
 //===============================================================
 //
-
+//
+//
+//
 void TerminalSettings(void){
 
     #if MODE_TEST == 1
@@ -567,12 +638,12 @@ void TerminalSettings(void){
 void TestScenarioSettings()
 {
     #if MODE_TEST == 1
-    //TEST_DetermineLineEquation();
-    //TEST_DetermineCrossPoint();
-    //TEST_CheckIfCrossPointBelongsToMillipedeForInitial();
-    //TEST_DetermineCrossDirection();
-    //TEST_DetermineCrossTimes();
-    //TEST_DetermineOverleap();
+    TEST_DetermineLineEquation();
+    TEST_DetermineCrossPoint();
+    TEST_CheckIfCrossPointBelongsToMillipedeForInitial();
+    TEST_DetermineCrossDirection();
+    TEST_DetermineCrossTimes();
+    TEST_DetermineOverleap();
     TEST_CheckMillipedeCollision();
     #endif // MODE_TEST
 }
@@ -841,8 +912,6 @@ int TEST_DetermineCrossPoint(void)
         //cout << "y:      "<<MILL1.CrossPoint.y << TT[i].Expected_CP.y << endl;
         //cout << "logicx: "<< (fabs(MILL1.CrossPoint.x    - TT[i].Expected_CP.x) <=1e-10) << endl;
         #endif // MODE_DEB
-
-
     }
     return 0;
 }
@@ -887,7 +956,7 @@ int TEST_CheckIfCrossPointBelongsToMillipedeForInitial(void)
         MILL.CrossPoint  = TT[i].CP;
 
 
-        CheckIfCrossPointBelongsToMillipedeForInitial(&MILL);
+        CHECK_IF_CrossPointBelongsToMillipedeForInitial(&MILL);
 
         cout << "TC" <<i<<": ";
 
