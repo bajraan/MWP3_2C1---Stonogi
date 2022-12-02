@@ -70,12 +70,6 @@ struct POIN
     double y;
 };
 
-struct PLZ
-{
-    int Min;
-    int Max;
-}
-PlayZone {100000,-100000};
 
 // 0 = Ax - By + F
 struct LINFAC
@@ -100,21 +94,7 @@ struct MILLPEDE
     int     TimesOverleap;
 };
 
-
-int  CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2);
-void DETERMINE_LineEquation(MILLPEDE *ST);
-void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2);
-void DETERMINE_CrossDirection(MILLPEDE *T1);
-void DETERMINE_CrossTimes(MILLPEDE *T1);
-void DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2);
-int  CHECK_IF_CollisionPointbelongstoPlayZone(MILLPEDE *T, PLZ PlayZone);
-int  CHECK_IF_CrossPointBelongsToMillipedeForInitial(MILLPEDE *T1);
-
-
-//
-// DEFINICJA OBSZARU GRY
-//
-struct PLG
+struct PLZ
 {
     POIN    PL1;
     POIN    PL2;
@@ -126,19 +106,26 @@ struct PLG
 
 }PlayZone
 
-    // OBSZAR GRY W UKŁADZIE WSPOLZEDNYCH
+    // OBSZAR GRY W UKLADZIE WSPOLZEDNYCH
 
     {-100000, 100000,      100000, 100000,
 
      -100000,-100000,      100000,-100000,
 
-
         -100000,
         100000
 
-
      };
 
+
+int  CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2);
+void DETERMINE_LineEquation(MILLPEDE *ST);
+void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2);
+void DETERMINE_CrossDirection(MILLPEDE *T1);
+void DETERMINE_CrossTimes(MILLPEDE *T1);
+void DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2);
+int  CHECK_IF_CollisionPointbelongstoPlayZone(MILLPEDE *T, PLZ PlayZone);
+int  CHECK_IF_CrossPointBelongsToMillipedeForInitial(MILLPEDE *T1);
 
 
 int TEST__CheckMillipedeCollision(void);
@@ -397,7 +384,7 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2)
 }
 
 
-int CHECK_IF_CollisionPointbelongstoPlayZone(MILLPEDE *T, PLG *PlayZone)
+int CHECK_IF_CollisionPointbelongstoPlayZone(MILLPEDE *T, PLZ *PlayZone)
 {
 
     if(
