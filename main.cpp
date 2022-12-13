@@ -1,15 +1,16 @@
 #include <iostream>
 #include <algorithm>
 #include <math.h>
+#include <sstream>
+
 #define MODE_DEB     0
 #define MODE_TEST    1
 #define PRINT_RAPORT 0
 
-// PUNKT PRZECIÄ˜CIA LEÅ»Y W STARCIE STONOGI!
-// DETERMINE COLLISIONTIMES
-
 #define TEST_PASS   SetConsoleTextAttribute(hConsole,10);cout<<"PASS";SetConsoleTextAttribute(hConsole,7);
 #define TEST_FAIL   SetConsoleTextAttribute(hConsole,12);cout<<"FAIL";SetConsoleTextAttribute(hConsole,7);
+
+#define M_PI 3.14159265358979323846
 
 #if MODE_TEST == 1
 #include <windows.h>
@@ -17,13 +18,13 @@ HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif // MODE_TEST
 
 #if PRINT_RAPORT == 1
-#include /printraporttohtml.cpp
+#include <fstream>
+#include "printraport/printraport.h"
 #endif // PRINT_RAPORT
 
-// TODO
-// proste pokrywajÄ…ce siÄ™ zderzenie dczoÅ‚owe
 
 using namespace std;
+
 
 enum direction
 {
@@ -56,28 +57,18 @@ enum BelongsToInitial
     CrossPointBelongsToInitial__TRUE
 };
 
-
-enum CollisionPointbelongstoPlayZone
+enum belongstoPlayZone
 {
-    CollisionPointbelongstoPlayZone_NO,
-    CollisionPointbelongstoPlayZone_YES
+    CrossPointBelongsToPlayZone_FALSE,
+    CrossPointBelongsToPlayZone__TRUE
 };
 
-
-struct POIN
+struct Point
 {
     double x;
     double y;
 };
 
-struct PLZ
-{
-    int Min;
-    int Max;
-}
-PlayZone {100000,-100000};
-
-// 0 = Ax - By + F
 struct LINFAC
 {
     double A;
@@ -87,17 +78,59 @@ struct LINFAC
 
 struct MILLPEDE
 {
-    POIN    P1;
-    POIN    P2;
+    Point    P1;
+    Point    P2;
     double  speed;
     LINFAC  lin;
     string  CrossPointExist;
-    POIN    CrossPoint;
+    Point    CrossPoint;
     int     CPdirection;
     int     CPbelongsToInitial;
     double  CrossTimeStart;
     double  CrossTimeEnd;
     int     TimesOverleap;
+};
+
+
+// 1) trajektoria musi zosta† przesuni©ta do pukut 0,0
+// 2) trajektoria musi zosta† obrucona wzgl©dem punkut 0,0
+// utworzy† macierze transformacji;
+// na bazie wzoru prostej
+
+struct PLZ
+{
+    Point    PL1;
+    Point    PL2;
+    Point    PL3;
+    Point    PL4;
+
+    int Min;
+    int Max;
+
+}PlayZone
+
+    {
+        -100000, 100000,      100000, 100000,
+        -100000,-100000,      100000,-100000,
+        -100000,
+         100000
+    };
+
+struct Shift_M
+{
+    double Tx;
+    double Ty;
+};                  // Shift_M[KOLUMNY ][WIERSZE]
+
+struct Rotate_M
+{
+    double theta;
+    double T[2][2]; 
+                    // T[1][1]    cos()  
+                    // T[1][2]   -sin()
+                    // T[2][1]    sin()
+                    // T[2][2]    cos()
+                    // T[KOLUMNY][WIERSZE]
 };
 
 
@@ -107,39 +140,12 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2);
 void DETERMINE_CrossDirection(MILLPEDE *T1);
 void DETERMINE_CrossTimes(MILLPEDE *T1);
 void DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2);
-int  CHECK_IF_CollisionPointbelongstoPlayZone(MILLPEDE *T, PLZ PlayZone);
+void DETERMINE_ShiftMatrix (MILLPEDE*T, Shift_M*sT);
+void DETERMINE_RotateMatrix(MILLPEDE*T,Rotate_M*rT);
+int  CHECK_IF_CollisionPointbelongstoPlayZone(MILLPEDE *T, PLZ *PlayZone);
 int  CHECK_IF_CrossPointBelongsToMillipedeForInitial(MILLPEDE *T1);
-
-
-//
-// DEFINICJA OBSZARU GRY
-//
-struct PLG
-{
-    POIN    PL1;
-    POIN    PL2;
-    POIN    PL3;
-    POIN    PL4;
-
-    int Max;
-    int Min;
-
-}PlayZone
-
-    // OBSZAR GRY W UKÅADZIE WSPOLZEDNYCH
-
-    {-100000, 100000,      100000, 100000,
-
-     -100000,-100000,      100000,-100000,
-
-
-        -100000,
-        100000
-
-
-     };
-
-
+void TRANSFORM_VerticalToHorizontalMillpede(MILLPEDE*vT, Shift_M sT, Rotate_M rT, MILLPEDE*hT );
+void MULL_Matrices2x1and2x2(Point* P, Rotate_M * T, Point* P_pri );
 
 int TEST__CheckMillipedeCollision(void);
 int TEST__DETERMINE_LineEquation(void);
@@ -147,27 +153,27 @@ int TEST__DETERMINE_CrossPoint(void);
 int TEST__DETERMINE_CrossDirection(void);
 int TEST__DETERMINE_CrossTimes(void);
 int TEST__DETERMINE_Overleap(void);
+void TEST__DETERMINE_ShiftMatrix(void);
+void TEST__DETERMINE_RotateMatrix(void);
 int TEST__CHECK_IF_CollisionPointbelongstoPlayZone(void);
 int TEST__CHECK_IF_CrossPointBelongsToMillipedeForInitial(void);
-
+void TEST__TRANSFORM_VerticalToHorizontalMillpede(void);
 
 
 void LoadData(MILLPEDE *ST1, MILLPEDE *ST2);
 void TerminalSettings(void);
 void TestScenarioSettings(void);
+void gotox(short);
 
 
 int main()
 {
-
 
     TerminalSettings();
     TestScenarioSettings();
 
     MILLPEDE ST1;
     MILLPEDE ST2;
-
-
 
     int Cases;
     cin >> Cases;
@@ -180,6 +186,139 @@ int main()
     return 0;
 }
 
+
+
+
+int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
+{
+
+    DETERMINE_LineEquation(ST1); // Determine line eqution for ST!
+    DETERMINE_LineEquation(ST2); // Determine line eqution for ST2
+
+    if
+    ( 
+     ST1->lin.A == ST2->lin.A
+     &&
+     ST1->lin.B == ST2->lin.B
+     &&
+     ST1->lin.C == ST2->lin.C 
+    )
+    {
+        cout << "Case in progress";
+        MILLPEDE    h_ST1;
+        MILLPEDE    h_ST2;
+        Shift_M     sT;
+        Rotate_M    rT;
+
+
+
+        if
+        (
+                1 /// TODO // WYKONAJ JESLI TRAJEKTORIA JEST INNA NIZ POZIOMA
+        )
+        {
+            
+
+        }
+        else
+        {
+
+            DETERMINE_ShiftMatrix (ST1, &sT);
+            DETERMINE_RotateMatrix(ST1, &rT);
+
+            TRANSFORM_VerticalToHorizontalMillpede
+                ( 
+                   ST1, 
+                   sT, 
+                   rT, 
+                  &h_ST1
+                );
+            
+            TRANSFORM_VerticalToHorizontalMillpede
+                ( 
+                   ST2, 
+                   sT, 
+                   rT, 
+                  &h_ST2
+                );
+        }
+
+
+        h_ST1.speed = ST1->speed;
+        h_ST2.speed = ST2->speed;
+
+
+        //TODO
+
+    }
+    else if
+    (
+    ST1->lin.A == ST2->lin.A
+    &&
+    ST1->lin.B == ST2->lin.B
+    &&
+    ST1->lin.C != ST2->lin.C
+    )
+    {
+        return collisionNO;
+    }
+    else
+    {
+
+        DETERMINE_CrossPoint(ST1,ST2);
+
+        if(ST1->CrossPointExist == "YES")
+        {
+
+
+            CHECK_IF_CrossPointBelongsToMillipedeForInitial(ST1);
+
+
+            if
+            (
+             CrossPointBelongsToInitial_FALSE
+             ==
+             ST1->CPbelongsToInitial
+            )
+            {
+                DETERMINE_CrossDirection(ST1);
+                if(neg == ST1->CPdirection ) return collisionNO;
+            }
+
+
+            CHECK_IF_CrossPointBelongsToMillipedeForInitial(ST2);
+
+
+            if
+            (
+            CrossPointBelongsToInitial_FALSE
+            ==
+            ST2->CPbelongsToInitial
+            )
+            {
+                DETERMINE_CrossDirection(ST2);
+                if(neg == ST2->CPdirection ) return collisionNO;
+            }
+
+            DETERMINE_CrossTimes(ST1);
+            DETERMINE_CrossTimes(ST2);
+
+            DETERMINE_Overleap(ST1,ST2);
+
+            if
+            (
+             overleapExist_YES 
+             == 
+             ST1->TimesOverleap
+            )
+                    return collisionYES;
+            else
+                    return collisionNO;
+        }
+    else return collisionNO;
+    }
+    return -1;
+}
 
 
 void LoadData(MILLPEDE *ST1, MILLPEDE *ST2)
@@ -197,81 +336,22 @@ void LoadData(MILLPEDE *ST1, MILLPEDE *ST2)
         >> ST2->speed;
 }
 
-int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
-{
-
-    DETERMINE_LineEquation(ST1); // Determine line eqution for ST!
-    DETERMINE_LineEquation(ST2); // Determine line eqution for ST2
-
-    if
-        (
-         ST1->lin.A == ST2->lin.A
-         &&
-         ST1->lin.B == ST2->lin.B
-         &&
-         ST1->lin.C == ST2->lin.C
-         )
-    {
-        cout << "Case in progress";
-    }
-    else if
-        (
-         ST1->lin.A == ST2->lin.A
-         &&
-         ST1->lin.B == ST2->lin.B
-         &&
-         ST1->lin.C != ST2->lin.C
-         )
-    {
-        return collisionNO;
-    }
-    else
-    {
-
-        DETERMINE_CrossPoint(ST1,ST2);
-
-        if(ST1->CrossPointExist == "YES")
-        {
-
-            CHECK_IF_CrossPointBelongsToMillipedeForInitial(ST1);
-            if
-            (
-            CrossPointBelongsToInitial_FALSE
-            ==
-            ST1->CPbelongsToInitial
-            )
-            {
-                DETERMINE_CrossDirection(ST1);
-                if(neg == ST1->CPdirection ) return collisionNO;
-            }
 
 
-            CHECK_IF_CrossPointBelongsToMillipedeForInitial(ST2);
-            if
-            (
-            CrossPointBelongsToInitial_FALSE
-            ==
-            ST2->CPbelongsToInitial
-            )
-            {
-                DETERMINE_CrossDirection(ST2);
-                if(neg == ST2->CPdirection ) return collisionNO;
-            }
+void gotox(short x)
+{ 
 
-            DETERMINE_CrossTimes(ST1);
-            DETERMINE_CrossTimes(ST2);
-
-            DETERMINE_Overleap(ST1,ST2);
-
-            if(overleapExist_YES == ST1->TimesOverleap)
-                    return collisionYES;
-            else
-                    return collisionNO;
-        }
-    else return collisionNO;
-    }
-    return -1;
+    short y;
+    short jeden = 1;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo (output, &csbi);
+    y = csbi.dwCursorPosition.Y;
+    COORD pos = {x, y};
+    SetConsoleCursorPosition(output, pos);
 }
+
+
 
 void DETERMINE_LineEquation(MILLPEDE *T)
 {
@@ -357,7 +437,7 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2)
     cout << "DetermineCrossPoint";
     #endif // MODE_DEB
 
-    POIN CP;
+    Point CP;
 
     if(T1->lin.A == T2->lin.A)
     {
@@ -397,26 +477,34 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2)
 }
 
 
-int CHECK_IF_CollisionPointbelongstoPlayZone(MILLPEDE *T, PLG *PlayZone)
+/// @brief 
+/// @param T 
+/// @param PlayZone 
+/// @return 
+int CHECK_IF_CollisionPointbelongstoPlayZone(MILLPEDE *T, PLZ *PlayZone)
 {
 
-    if(
+    #if MODE_DEB == 1
+    cout << "                   " << endl;
+    cout << "CHECK_IF_CollisionPointbelongstoPlayZone" << endl;
+    #endif // MODE_DEB
 
-       PlayZone->Min <= T->CrossPoint.x
-       &&
-       PlayZone->Max >= T->CrossPoint.x
-       &&
-       PlayZone->Min <= T->CrossPoint.y
-       &&
-       PlayZone->Max >= T->CrossPoint.y
 
-       )
+    if  (
+        PlayZone->Min <= T->CrossPoint.x
+        &&
+        PlayZone->Max >= T->CrossPoint.x
+        &&
+        PlayZone->Min <= T->CrossPoint.y
+        &&
+        PlayZone->Max >= T->CrossPoint.y
+        )
     {
-        return CollisionPointbelongstoPlayZone_YES;
+        return CrossPointBelongsToPlayZone__TRUE;
     }
     else
     {
-        return CollisionPointbelongstoPlayZone_NO;
+        return CrossPointBelongsToPlayZone_FALSE;
     }
 }
 
@@ -435,8 +523,8 @@ int CHECK_IF_CrossPointBelongsToMillipedeForInitial(MILLPEDE *T)
 
 
 // trzeba policzyc ktory z punktow P1,P2 jest blizej punktu CP,
-// jeÅ¼eli punkt P1 jest bliÅ¼ej CP to kierunek jset pozytywny
-// jeÅ¼ï¿½eli punkt P2 jest bliÅ¼ej CP to kierunek jest negatywny
+// je¾eli punkt P1 jest bli¾ej CP to kierunek jset pozytywny
+// je¾eli punkt P2 jest bli¾ej CP to kierunek jest negatywny
 //
 // Examples:
 // P1<------P2      CP      // DIRECTION NEGATIVE
@@ -526,10 +614,6 @@ void DETERMINE_CrossTimes(MILLPEDE *T)
     }
 
 
-
-    //TODO
-    // SPEED == 0
-    // PUNKT PRZECIÄ˜CIA LEÅ»Y W STARCIE STONOGI!
     #if MODE_DEB == 1
     cout << "-----------------------------"  << endl;
     cout << "P1: (" << T->P1.x << "," << T->P1.y << ")" << endl;
@@ -554,6 +638,7 @@ void DETERMINE_CrossTimes(MILLPEDE *T)
     cout << endl;
     #endif // MODE_DEB
 }
+
 
 
 void DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2)
@@ -618,14 +703,154 @@ void DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2)
 
 }
 
+
+
+void DETERMINE_ShiftMatrix(MILLPEDE*T, Shift_M *sT)
+{
+    if
+    (                   // Case:
+      1 == T->lin.A     // Vertical Trajectory
+      &&                //
+      0 == T->lin.B     //
+    )                   //
+    {
+        sT->Tx = T->lin.C;
+        sT->Ty = 0;
+
+    }
+    else if
+    (
+      0 > T->lin.A
+    )
+    {
+        sT->Tx = -(T->lin.C/T->lin.A);
+        sT->Ty = 0;
+        //cout << endl << "CS2" << endl;
+    }
+    else
+    {
+        sT->Tx = T->lin.C;
+        sT->Ty = 0;
+        //cout << endl << "CS3" << endl;
+    }
+}
+
+
+
+void DETERMINE_RotateMatrix(MILLPEDE*T,Rotate_M *rT)
+{
+    if
+    (//=========================================//  |
+      1 == T->lin.A     //                      //  |    |        
+      &&                // VERTICAL Trajectory  //  |    |        
+      0 == T->lin.B     //  theta = 90          //  |    |        
+    )//=========================================// ---------------
+    {
+
+        rT->theta = M_PI/2;   // -90 deg
+
+    }
+    else if(0 <= T->lin.A )                     //            /
+    //==========================================//       |   /                  
+                    // Angular Trajectory       //       |  /      
+                    //  0deg < theta < 90deg    //       | /       
+    //==========================================// --------------- 
+    {
+
+         rT->theta = atan(T->lin.A);
+
+    }
+    else                                        //  ?
+    //==========================================//   ?   |          
+                    // Angular Trajectory       //    ?  |         
+                    //  90deg < theta < 18deg   //     ? |         
+    //==========================================// ---------------
+    {
+
+        rT->theta = M_PI + atan(T->lin.A);
+
+    }
+
+
+    rT->theta *= -1;  // Change ratate direction 
+
+
+    rT->T[0][0] = cos(rT->theta); rT->T[1][0] = -sin(rT->theta);
+    rT->T[0][1] = sin(rT->theta); rT->T[1][1] =  cos(rT->theta);
+
+    //      [kolumny][wiersze]
+
+}
+
+void MULL_Matrices2x1and2x2(Point* P, Rotate_M * T, Point* P_pri )
+{
+    //      [KOLUMNY][WIERSZE]
+    P_pri->x = T->T[0][0] * P->x + T->T[1][0] * P->y;
+    P_pri->y = T->T[0][1] * P->x + T->T[1][1] * P->y;
+}
+
+
+void TRANSFORM_VerticalToHorizontalMillpede(MILLPEDE*MILL, Shift_M sT, Rotate_M rT, MILLPEDE*hT )
+{
+
+    Point temp;
+
+
+    hT->P1.x = 0;
+    hT->P1.y = 0;
+    hT->P2.x = 0;
+    hT->P2.y = 0;
+
+
+    if(MILL->lin.A >= 0)
+    {
+    hT->P1.x = MILL->P1.x + sT.Tx;
+    hT->P1.y = MILL->P1.y + sT.Ty;
+    hT->P2.x = MILL->P2.x + sT.Tx;
+    hT->P2.y = MILL->P2.y + sT.Ty;
+    }
+
+
+    if(MILL->lin.A < 0)
+    {
+    hT->P1.x = MILL->P1.x - sT.Tx;
+    hT->P1.y = MILL->P1.y - sT.Ty;
+    hT->P2.x = MILL->P2.x - sT.Tx;
+    hT->P2.y = MILL->P2.y - sT.Ty;
+    }
+
+
+    #if     MODE_DEB == 1
+    cout << "MILL P1: " << MILL->P1.x << "," << MILL->P1.y << endl;
+    cout << "MILL P2: " << MILL->P2.x << "," << MILL->P2.y << endl;
+    cout << "Shifted P1: " << hT->P1.x << "," << hT->P1.y << endl;
+    cout << "Shifted P2: " << hT->P2.x << "," << hT->P2.y << endl;
+    cout << "hT->P1.x" << hT->P1.x << endl;
+    cout << "hT->P1.y" << hT->P1.y << endl;
+    cout << "hT->P2.x" << hT->P2.x << endl;
+    cout << "hT->P2.y" << hT->P2.y << endl;   
+    #endif
+
+    MULL_Matrices2x1and2x2(&hT->P1, &rT, &temp );
+    hT->P1 = temp;
+
+    MULL_Matrices2x1and2x2(&hT->P2, &rT, &temp );
+    hT->P2 = temp;
+
+}
+
+
+//===============================================================
+//===============================================================
 //
+//
+//
+//      TEST FUNCTIONS
 //
 //
 //
 //===============================================================
-// TEST FUNCTIONS
 //===============================================================
-//
 
 
 
@@ -655,7 +880,8 @@ void TestScenarioSettings()
     TEST__DETERMINE_Overleap();
     TEST__CHECK_IF_CrossPointBelongsToMillipedeForInitial();
     TEST__CHECK_IF_CollisionPointbelongstoPlayZone();
-
+    TEST__DETERMINE_RotateMatrix();
+    TEST__TRANSFORM_VerticalToHorizontalMillpede();
 
     TEST__CheckMillipedeCollision();
 
@@ -669,11 +895,11 @@ int TEST__DETERMINE_LineEquation( void )
 
     int AmountOfTest = 11;
     struct TESTTable
-{
-    POIN P1;
-    POIN P2;
+    {
+    Point P1;
+    Point P2;
     LINFAC expected;
-};
+    };
 
     cout << endl;
     cout << " >>> " << endl;
@@ -720,9 +946,14 @@ int TEST__DETERMINE_LineEquation( void )
         MILL.P1 = TT[i].P1;
         MILL.P2 = TT[i].P2;
 
+
         DETERMINE_LineEquation(&MILL);
 
-        cout << "TC" << i+1 << ": ";
+
+        if(i+1<10)  cout << "TC" <<i+1<<" : ";
+        else        cout << "TC" <<i+1<<": ";
+
+
         if
         (
              (fabs(MILL.lin.A - TT[i].expected.A) <= 1e-10)
@@ -740,15 +971,18 @@ int TEST__DETERMINE_LineEquation( void )
         }
 
 
+
         cout << "  ||  ";
         cout << "P1("<<TT[i].P1.x<<","<<TT[i].P1.y<<")";
         cout << "P2("<<TT[i].P2.x<<","<<TT[i].P2.y<<")";
         cout << "    ";
 
+        gotox(50);
         cout << "(A,B,C): EXP: ("
              << TT[i].expected.A << ","
              << TT[i].expected.B << ","
              << TT[i].expected.C << ")";
+        gotox(80);
         cout << "  OBS: ("
              << MILL.lin.A << ","
              << MILL.lin.B << ","
@@ -766,12 +1000,12 @@ int TEST__DETERMINE_CrossPoint(void)
 
     struct TESTTable
     {
-    POIN    S1P1;
-    POIN    S1P2;
-    POIN    S2P1;
-    POIN    S2P2;
-    string  Expected_CrossPointExist;
-    POIN    Expected_CP;
+    Point    S1P1;
+    Point    S1P2;
+    Point    S2P1;
+    Point    S2P2;
+    string   Expected_CrossPointExist;
+    Point    Expected_CP;
     };
 
     cout << endl;
@@ -817,22 +1051,29 @@ int TEST__DETERMINE_CrossPoint(void)
         cout << "    ------------------------------" << endl;
         #endif // MODE_DEB
 
+
         MILLPEDE MILL1;
         MILLPEDE MILL2;
+
 
         MILL1.P1 = TT[i].S1P1;
         MILL1.P2 = TT[i].S1P2;
         MILL2.P1 = TT[i].S2P1;
         MILL2.P2 = TT[i].S2P2;
 
+
         DETERMINE_LineEquation(&MILL1);
         DETERMINE_LineEquation(&MILL2);
         DETERMINE_CrossPoint(&MILL1, &MILL2);
 
-        cout << "TC" << i+1 << ": ";
+
+        if(i+1<10)  cout << "TC" <<i+1<<" : ";
+        else        cout << "TC" <<i+1<<": ";
+
 
         if
-        (("YES" == TT[i].Expected_CrossPointExist)
+        (
+         ("YES" == TT[i].Expected_CrossPointExist)
          &&
          (fabs(MILL1.CrossPoint.x - TT[i].Expected_CP.x) <=1e-10)
          &&
@@ -872,6 +1113,92 @@ int TEST__DETERMINE_CrossPoint(void)
 
 int TEST__CHECK_IF_CollisionPointbelongstoPlayZone(void)
 {
+
+
+    cout <<                                                          "\n";
+    cout << " >>>                                                     \n";
+    cout << " >>> TEST FOR: CHECK_IF_CollisionPointbelongstoPlayZone()\n";
+    cout << " >>>                                                     \n";
+    cout <<                                                          "\n";
+
+
+    struct TESTTable
+    {
+    Point CP;
+    int expected_result;
+    };
+
+
+    int AmountOfTest = 19;
+    TESTTable TT[AmountOfTest] =
+    {
+
+
+    //|--------|----------------------------------|
+    //|   CP   |           Expected result        |
+    //|        |                                  |
+          0,      3, CrossPointBelongsToPlayZone__TRUE,
+          3,      0, CrossPointBelongsToPlayZone__TRUE,
+          0,     10, CrossPointBelongsToPlayZone__TRUE,
+         10,      0, CrossPointBelongsToPlayZone__TRUE,
+        100,    100, CrossPointBelongsToPlayZone__TRUE,
+          0,     -1, CrossPointBelongsToPlayZone__TRUE,
+
+      99999,  99999, CrossPointBelongsToPlayZone__TRUE,
+     -99999, -99999, CrossPointBelongsToPlayZone__TRUE,
+      99999, -99999, CrossPointBelongsToPlayZone__TRUE,
+    -100000,-100000, CrossPointBelongsToPlayZone__TRUE,
+     100000, 100000, CrossPointBelongsToPlayZone__TRUE,
+     100000,-100000, CrossPointBelongsToPlayZone__TRUE,
+
+        1,   100001, CrossPointBelongsToPlayZone_FALSE,
+        1,   100002, CrossPointBelongsToPlayZone_FALSE,
+        0,   999999, CrossPointBelongsToPlayZone_FALSE,
+ 99999999,   999999, CrossPointBelongsToPlayZone_FALSE,
+  -110000,        0, CrossPointBelongsToPlayZone_FALSE,
+   110000,        1, CrossPointBelongsToPlayZone_FALSE,
+   102000,     -400, CrossPointBelongsToPlayZone_FALSE
+
+
+    };
+    
+
+    for(int i=0; i<AmountOfTest; i++)
+    {
+        MILLPEDE MILL;
+        MILL.CrossPoint  = TT[i].CP;
+
+
+        if(i+1<10)  cout << "TC" <<i+1<<" : ";
+        else        cout << "TC" <<i+1<<": ";
+
+
+        if
+        (
+         TT[i].expected_result 
+         ==
+         CHECK_IF_CollisionPointbelongstoPlayZone(&MILL, &PlayZone)
+        )
+        {
+            TEST_PASS;
+        }
+        else
+        {
+            TEST_FAIL;
+        }
+        
+
+        cout <<"  ||  "
+             <<"("<<MILL.CrossPoint.x<<","<<MILL.CrossPoint.y<<") ";
+        gotox(30);
+        cout <<"  ||   ";
+        cout <<"  exp: " << TT[i].expected_result;
+        gotox(60);
+        cout <<"  obs: " << CHECK_IF_CollisionPointbelongstoPlayZone(&MILL, &PlayZone);
+        cout << endl;
+
+    }
+
     return -1;
 }
 
@@ -881,10 +1208,10 @@ int TEST__CHECK_IF_CrossPointBelongsToMillipedeForInitial(void)
 {
     struct TESTTable
     {
-    POIN P1;
-    POIN P2;
-    POIN CP;
-    int expected_result;
+        Point    P1;
+        Point    P2;
+        Point    CP;
+        int     expected_result;
     };
 
 
@@ -922,7 +1249,8 @@ int TEST__CHECK_IF_CrossPointBelongsToMillipedeForInitial(void)
         CHECK_IF_CrossPointBelongsToMillipedeForInitial(&MILL);
 
 
-        cout << "TC" <<i<<": ";
+        if(i+1<10)  cout << "TC" <<i+1<<" : ";
+        else        cout << "TC" <<i+1<<": ";
 
 
         if(MILL.CPbelongsToInitial == TT[i].expected_result)
@@ -944,9 +1272,9 @@ int TEST__DETERMINE_CrossDirection(void)
 {
    struct TESTTable
     {
-    POIN P1;
-    POIN P2;
-    POIN CP;
+    Point P1;
+    Point P2;
+    Point CP;
     int expected_direction;
     };
 
@@ -990,7 +1318,8 @@ int TEST__DETERMINE_CrossDirection(void)
 
         DETERMINE_CrossDirection(&MILL);
 
-        cout << "TC" <<i<<": ";
+        if(i+1<10)  cout << "TC" <<i+1<<" : ";
+        else        cout << "TC" <<i+1<<": ";
 
         if(MILL.CPdirection == TT[i].expected_direction)
         {
@@ -1017,10 +1346,10 @@ int TEST__DETERMINE_CrossTimes(void)
 {
     struct TESTTable
     {
-    POIN    P1;
-    POIN    P2;
+    Point   P1;
+    Point   P2;
     double  speed;
-    POIN    CP;
+    Point   CP;
     int     CPbelongsToInitial;
     double  expected_CrossStart;
     double  expected_CrossEnd;
@@ -1060,8 +1389,8 @@ int TEST__DETERMINE_CrossTimes(void)
 
         DETERMINE_CrossTimes(&MILL);
 
-        if(i+1<10)cout << "TC" <<i+1<<" : ";
-        else cout << "TC" <<i+1<<": ";
+        if(i+1<10)  cout << "TC" <<i+1<<" : ";
+        else        cout << "TC" <<i+1<<": ";
 
         if
         (
@@ -1092,11 +1421,11 @@ int TEST__DETERMINE_CrossTimes(void)
 
 int TEST__DETERMINE_Overleap(void)
 {
-    cout << endl;
-    cout << " >>> " << endl;
-    cout << " >>> TEST FOR: DetermineOverleap() " << endl;
-    cout << " >>> " << endl;
-    cout << endl;
+    cout << "\n";
+    cout << " >>> " << "\n";
+    cout << " >>> TEST FOR: DetermineOverleap() " << "\n";
+    cout << " >>> " << "\n";
+    cout << "\n";
 
     struct TESTTable
     {
@@ -1132,8 +1461,6 @@ int TEST__DETERMINE_Overleap(void)
                                     };
 
 
-
-
     for(int i=0; i<AmountOfTest; i++)
     {
         MILLPEDE MILL1;
@@ -1147,8 +1474,8 @@ int TEST__DETERMINE_Overleap(void)
         DETERMINE_Overleap(&MILL1, &MILL2);
 
 
-        if(i+1<10)cout << "TC" <<i+1<<" : ";
-        else cout << "TC" <<i+1<<": ";
+        if(i+1<10)  cout << "TC" <<i+1<<" : ";
+        else        cout << "TC" <<i+1<<": ";
 
         if(MILL1.TimesOverleap == TT[i].ExpectedOverleap)
         {
@@ -1175,22 +1502,430 @@ int TEST__DETERMINE_Overleap(void)
 
 
 
+
+void TEST__DETERMINE_ShiftMatrix(void)
+{
+    int AmountOfTest = 4;
+    struct TESTTable
+    {
+    Point   P1;
+    Point   P2;
+    LINFAC  lin;
+    Shift_M expected_sT;
+    };
+
+    cout <<                                             "\n";
+    cout << " >>> " <<                                  "\n";
+    cout << " >>> TEST for DETERMINE_ShiftMatrix()" <<  "\n";
+    cout << " >>> " <<                                  "\n";
+    cout <<                                             "\n";
+
+    TESTTable TT[AmountOfTest] = 
+    {
+    //-----------------| |-----------------| |----------------|
+    //        |        | |     LINFAC      | | ExpectedMatrix |
+    //   P1   |   P2   | |  A  |  B  |  C  | |   Tx   |  Ty   |
+    //        |        | |     |     |     | |        |       |
+       -2,2   , -2, 4  ,      1,    0,    2,         2,0,
+       10,0   , 10,10  ,      1,    0,  -10,       -10,0,
+        0,4   ,  0, 2  ,      1,    0,    0,         0,0,
+        3,4   ,  3,-2  ,      1,    0,   -3,        -3,0,
+    };
+
+
+    for(int i=0; i<AmountOfTest; i++)
+    {
+        Shift_M sT;
+        MILLPEDE MILL;
+        MILL.lin = TT[i].lin;
+
+        DETERMINE_ShiftMatrix(&MILL, &sT);
+
+        if(i+1<10)  cout << "TC" <<i+1<<" : ";
+        else        cout << "TC" <<i+1<<": ";
+
+        if
+        (
+             (fabs(sT.Tx - TT[i].expected_sT.Tx ) <= 1e-10)
+             &&
+             (fabs(sT.Ty - TT[i].expected_sT.Ty ) <= 1e-10)
+        )
+        {
+            TEST_PASS;
+        }
+        else
+        {
+            TEST_FAIL;
+        }
+
+
+
+        #if MODE_DEB == 1 
+        stringstream buf_1, buf_2, buf_3, buf_4;
+        string temp = "                              ";
+
+        buf_1   << "  ||  "
+                << "P1("<<TT[i].P1.x<<","<<TT[i].P1.y<<")"
+                << "P2("<<TT[i].P2.x<<","<<TT[i].P2.y<<")"
+                << "    ";
+        string BUF_1 = buf_1.str();
+
+        buf_2   << "  (A,B,C): ("
+                << MILL.lin.A << ","
+                << MILL.lin.B << ","
+                << MILL.lin.C << ")";
+        string BUF_2 = buf_2.str();
+
+        buf_3   << "(Tx,Ty,): EXP: ("
+                << TT[i].expected_sT.Tx << ","
+                << TT[i].expected_sT.Ty << ")";
+        string BUF_3 = buf_3.str();
+             
+        buf_4   << "  OBS: ("
+                << sT.Tx << ","
+                << sT.Ty << ")";
+        string BUF_4 = buf_4.str();
+
+        temp.replace( 0,1,BUF_1);
+        temp.replace(23,1,BUF_2);
+        temp.replace(45,1,BUF_3);
+        temp.replace(75,1,BUF_4);
+
+        cout << temp;
+        cout << endl;
+        #else
+        #endif
+    }
+}
+
+
+
+void TEST__DETERMINE_RotateMatrix(void)
+{
+    int AmountOfTest = 3;
+    struct TESTTable
+    {
+    Point       P1;
+    Point       P2;
+    LINFAC      lin;
+    Rotate_M    exp_RT;
+    };
+
+    cout <<                                              "\n";
+    cout << " >>> " <<                                   "\n";
+    cout << " >>> TEST for DETERMINE_RotateMatrix()" <<  "\n";
+    cout << " >>> " <<                                   "\n";
+    cout <<                                              "\n";
+
+    TESTTable TT[AmountOfTest] = 
+    {
+    //-----------------| |-----------| |-----------------------------------|
+    //        |        | |  LINFAC   | |          Expected MATRIX          |
+    //   P1   |   P2   | | A | B | C | | theta |     M11     |     M21     |
+    //        |        | |   |   |   | |       |     M12     |     M22     |
+        0,1   ,   0,2  ,   1 , 0 , 0 ,  -M_PI/2, cos(M_PI/2) , -sin(M_PI/2),
+                                                 sin(M_PI/2) ,  cos(M_PI/2),
+
+        0,-2  ,   0,4  ,   1 , 0 , 0 ,  -M_PI/2, cos(M_PI/2) , -sin(M_PI/2),
+                                                 sin(M_PI/2) ,  cos(M_PI/2),
+
+        1,1   ,   3,3  ,   1 ,-1 , 0 ,  -M_PI/4,cos(M_PI/4) ,-sin(M_PI/4) ,
+                                                sin(M_PI/4) , cos(M_PI/4) ,
+
+    };
+
+
+    for(int i=0; i<AmountOfTest; i++)
+    {
+        Rotate_M    RT;
+        MILLPEDE    MILL;
+        MILL.lin =  TT[i].lin;
+
+        DETERMINE_RotateMatrix(&MILL, &RT);
+ 
+        cout << "TC" << i+1 << ": ";
+
+        if
+        (
+             (fabs(RT.T[0][0] - TT[i].exp_RT.T[0][0] ) <= 1e-10)
+             &&
+             (fabs(RT.T[0][1] - TT[i].exp_RT.T[0][1] ) <= 1e-10)
+             &&
+             (fabs(RT.T[1][0] - TT[i].exp_RT.T[1][0] ) <= 1e-10)
+             &&
+             (fabs(RT.T[1][1] - TT[i].exp_RT.T[1][1] ) <= 1e-10)
+        )
+        {
+            TEST_PASS;
+        }
+        else
+        {
+            TEST_FAIL;
+        }
+
+
+
+        #if     MODE_DEB == 1
+        cout << endl;
+        cout << endl;
+        stringstream buf_1, buf_2, buf_3, buf_4, buf_5, buf_6, buf_7, buf_8, buf_9, buf_10;
+        string line  = "                                                                                           ";
+        string line1 = line;
+        string line2 = line;
+        cout    << endl;
+        buf_1   << "|| "
+                << "P1("<<TT[i].P1.x<<","<<TT[i].P1.y<<")";
+        buf_2   << "P2("<<TT[i].P2.x<<","<<TT[i].P2.y<<")";
+        buf_3   << "(A,B,C):("
+                << MILL.lin.A << ","
+                << MILL.lin.B << ","
+                << MILL.lin.C << ")";
+        buf_10  << "theta   EXP: "
+                << TT[i].exp_RT.theta
+                << "   OBS: "
+                << RT.theta;
+
+
+        buf_4   << "|| cos -sin | EXP: |"
+                << TT[i].exp_RT.T[0][0] << ","
+                << TT[i].exp_RT.T[0][1];
+        buf_5   << "|| sin  cos |      |"
+                << TT[i].exp_RT.T[1][0] << ","
+                << TT[i].exp_RT.T[1][1];
+
+        buf_6   << "| OBS: |"
+                << RT.T[0][0] << ","
+                << RT.T[0][1];
+        buf_7   << "|      |"
+                << RT.T[1][0] << ","
+                << RT.T[1][1];
+
+        buf_8   << "|";
+        buf_9   << "|";
+
+        string BUF_1 = buf_1.str();
+        string BUF_2 = buf_2.str();
+        string BUF_3 = buf_3.str();      
+        string BUF_4 = buf_4.str();
+        string BUF_5 = buf_5.str();
+        string BUF_6 = buf_6.str();
+        string BUF_7 = buf_7.str();
+        string BUF_8 = buf_8.str();
+        string BUF_9 = buf_9.str();
+        string BUF_10 = buf_10.str();
+
+
+        line1.replace(  0,1,BUF_1);
+        line1.replace( 12,1,BUF_2);
+        line1.replace( 20,1,BUF_3);
+        line2.replace( 0,1,BUF_10);
+
+        line1.replace( 38,1,BUF_4);
+        line2.replace( 38,1,BUF_5);
+
+        line1.replace( 85,1,BUF_6);
+        line2.replace( 85,1,BUF_7);
+
+        line1.replace(119,1,BUF_8);
+        line2.replace(119,1,BUF_9);
+
+        cout << line1 << endl;
+        cout << line2 << endl;
+
+        #else
+        cout <<  " || theta (deg)  EXP: "
+             << TT[i].exp_RT.theta * (180/3.141592)
+             << "        OBS: "
+             << RT.theta * (180/3.141592) << endl;
+        #endif
+    }  
+}
+
+
+void TEST__TRANSFORM_VerticalToHorizontalMillpede(void)
+{
+
+    int AmountOfTest = 28;
+    struct TESTTable
+    {
+        Point       P1;
+        Point       P2;
+        Point       exp_P1;
+        Point       exp_P2;
+    };
+
+    cout <<                                                                 "\n";
+    cout << " >>>                                                   " <<    "\n";
+    cout << " >>> TEST for: TRANSFORM_VerticalToHorizontalMillpede()" <<    "\n";
+    cout << " >>>                                                   " <<    "\n";   
+    cout << " >>>   Depends on: DETERMINE_LineEquation              " <<    "\n";
+    cout << " >>>                                                   " <<    "\n";
+    cout <<                                                                 "\n";
+
+    TESTTable TT[AmountOfTest] = 
+    {
+    //|-----------------||---------------------------| 
+    //|        |        ||   EXPECTED     EXPECTED   | 
+    //|   P1   |   P2   ||      P1    |      P2      | 
+    //|        |        ||            |              | 
+         0,1   ,   0,2  ,         1,0 ,          2,0 ,  //1
+         0,-2  ,   0,4  ,        -2,0 ,          4,0 ,  //2
+         1,5   ,   1,2  ,         5,0 ,          2,0 ,  //3
+        -1,5   ,  -1,2  ,         5,0 ,          2,0 ,  //4
+        -9,5   ,  -9,2  ,         5,0 ,          2,0 ,  //5
+
+         1,1   ,   3,3  ,   sqrt(2),0 ,   sqrt(18),0 ,//6
+         0,1   ,   2,3  ,   sqrt(2),0 ,   sqrt(18),0 ,//7
+        -1,1   ,   1,3  ,   sqrt(2),0 ,   sqrt(18),0 ,//8
+        -2,1   ,   0,3  ,   sqrt(2),0 ,   sqrt(18),0 ,//9
+        -3,1   ,  -1,3  ,   sqrt(2),0 ,   sqrt(18),0 ,//1
+
+         6,2   ,   2,-2 ,   sqrt(8),0 ,   -sqrt(8),0 ,//11
+         4,2   ,   0,-2 ,   sqrt(8),0 ,   -sqrt(8),0 ,//12
+         2,2   ,  -2,-2 ,   sqrt(8),0 ,   -sqrt(8),0 ,//13
+         0,2   ,  -4,-2 ,   sqrt(8),0 ,   -sqrt(8),0 ,//14
+        -2,2   ,  -6,-2 ,   sqrt(8),0 ,   -sqrt(8),0 ,//15
+        
+         2,2   ,   6,-2 ,   sqrt(8),0 ,   -sqrt(8),0 ,//16
+         0,2   ,   4,-2 ,   sqrt(8),0 ,   -sqrt(8),0 ,//17
+        -2,2   ,   0,-2 ,   sqrt(5),0 ,   -sqrt(5),0 ,//18
+        -4,2   ,  -2,-2 ,   sqrt(5),0 ,   -sqrt(5),0 ,//19
+        -6,2   ,  -4,-2 ,   sqrt(5),0 ,   -sqrt(5),0 ,//20
+        
+        -2, 3  ,  -4, 1 ,  sqrt(18),0 ,   sqrt(2 ),0 ,//21
+         4, 3  ,   2, 1 ,  sqrt(18),0 ,   sqrt(2 ),0 ,//22
+        -2,-1  ,  -4,-3 , -sqrt(2 ),0 ,  -sqrt(18),0 ,//23
+         4,-1  ,   2,-3 , -sqrt(2 ),0 ,  -sqrt(18),0 ,//24
+
+        -4, 3  ,  -2, 1 ,  sqrt(18),0 ,   sqrt(2 ),0 ,//25
+         2, 3  ,   4, 1 ,  sqrt(18),0 ,   sqrt(2 ),0 ,//26
+        -4,-1  ,  -2,-3 , -sqrt(2 ),0 ,  -sqrt(18),0 ,//27
+         2,-1  ,   4,-3 , -sqrt(2 ),0 ,  -sqrt(18),0 ,//28
+
+
+
+
+    };
+
+    for(int i=0; i<AmountOfTest; i++)
+    {
+        MILLPEDE    MILL;
+        MILLPEDE    h_MILL;
+        Shift_M     sT;
+        Rotate_M    rT;
+
+
+        MILL.P1 =  TT[i].P1;
+        MILL.P2 =  TT[i].P2;
+
+
+        DETERMINE_LineEquation(&MILL);
+        DETERMINE_ShiftMatrix( &MILL, &sT);
+        DETERMINE_RotateMatrix(&MILL, &rT);
+
+        TRANSFORM_VerticalToHorizontalMillpede
+            ( 
+                  &MILL, 
+                   sT, 
+                   rT, 
+                  &h_MILL 
+            );
+
+
+        if(i+1<10)  cout << "TC" <<i+1<<" : ";
+        else        cout << "TC" <<i+1<<": ";
+
+
+        if
+        (
+             (fabs(h_MILL.P1.x - TT[i].exp_P1.x ) <= 1e-10)
+             &&
+             (fabs(h_MILL.P1.y - TT[i].exp_P1.y ) <= 1e-10)
+             &&
+             (fabs(h_MILL.P2.x - TT[i].exp_P2.x ) <= 1e-10)
+             &&
+             (fabs(h_MILL.P2.y - TT[i].exp_P2.y ) <= 1e-10)
+        )
+        {
+            TEST_PASS;
+        }
+        else
+        {
+            TEST_FAIL;
+        }
+
+
+
+        #if     MODE_DEB == 1
+        cout << endl;
+        cout << "from: ";
+        cout << "P1("<<MILL.P1.x<<","<<MILL.P1.y<<")";
+        cout << "P2("<<MILL.P2.x<<","<<MILL.P2.y<<")";
+        cout << endl;
+        cout << " exp: ";
+        cout << "P1("<<TT[i].exp_P1.x<<","<<TT[i].exp_P1.y<<")";
+        cout << "P2("<<TT[i].exp_P2.x<<","<<TT[i].exp_P2.y<<")";
+        cout << endl;
+        cout << " obs: ";
+        cout << "P1("<<h_MILL.P1.x<<","<<h_MILL.P1.y<<")";
+        cout << "P2("<<h_MILL.P2.x<<","<<h_MILL.P2.y<<")";
+        cout << endl;
+        cout << "-----------------------------------------" << endl;
+        cout << "Linfac (A,B,C): " << MILL.lin.A << "," << MILL.lin.B << "," << MILL.lin.C << endl;
+        cout << "-----------------------------------------" << endl;
+        cout << "Shift_M: " << endl;
+        cout << sT.Tx << endl;
+        cout << sT.Ty << endl;
+        cout << "-----------------------------------------" << endl;
+        cout << "theta rad : " << rT.theta << endl;
+        cout << "theta deg : " << rT.theta * (180/3.141592) << endl;
+        cout << "-----------------------------------------" << endl;
+        cout << "Rotate_M: " << endl;
+        cout << rT.T[0][0] << "              " << rT.T[1][0] << endl; // [kolumny][wiersze]
+        cout << rT.T[0][1] << "              " << rT.T[1][1] << endl; // [kolumny][wiersze]
+        cout << "-----------------------------------------" << endl;
+        cout << " obs: ";
+        cout << "P1("<<h_MILL.P1.x<<","<<h_MILL.P1.y<<")";
+        cout << "P2("<<h_MILL.P2.x<<","<<h_MILL.P2.y<<")" << endl;
+        cout << "-----------------------------------------" << endl;
+        cout << endl;
+        cout << endl;
+        cout << endl;
+        #else
+        cout << "  || theta: " << rT.theta * (180/3.141592);
+        gotox((short)30);
+        cout << "  ||  from: "
+             << "P1("<<MILL.P1.x<<","<<MILL.P1.y<<")"
+             << "P2("<<MILL.P2.x<<","<<MILL.P2.y<<")";
+        gotox((short)70);
+        cout << " exp: "
+             << "P1("<<TT[i].exp_P1.x<<","<<TT[i].exp_P1.y<<")"
+             << "P2("<<TT[i].exp_P2.x<<","<<TT[i].exp_P2.y<<")";
+        gotox((short)110);
+        cout << " obs: "
+             << "P1("<<h_MILL.P1.x<<","<<h_MILL.P1.y<<")"
+             << "P2("<<h_MILL.P2.x<<","<<h_MILL.P2.y<<")"
+             << endl;
+        #endif
+    }
+}
+
+
+
 int TEST__CheckMillipedeCollision(void)
 {
     
     struct TESTTable
     {
-        POIN S1P1;
-        POIN S1P2;
-        double speed1;
-
-        POIN S2P1;
-        POIN S2P2;
-        double speed2;
-
-        int expected_CollisionState;
-        string TestDescriptions;
-        };
+    Point   S1P1;
+    Point   S1P2;
+    double  speed1;
+    Point   S2P1;
+    Point   S2P2;
+    double  speed2;
+    int     expected_CollisionState;
+    string  TestDescriptions;
+    };
 
     int AmountOfTest = 23;
     TESTTable TT[AmountOfTest] =
@@ -1290,15 +2025,15 @@ int TEST__CheckMillipedeCollision(void)
 
     };
 
-    cout << "/n/n";
-    cout << " ==========================================================================================================/n";
-    cout << " >>>                                                                                                    <<</n";
-    cout << " >>> FINAL TESTS                                                                                        <<</n";
-    cout << " >>>                                                                                                    <<</n";
-    cout << " >>> TEST FOR: CheckMillipedeCollision()                                                                <<</n";
-    cout << " >>>                                                                                                    <<</n";
-    cout << " ==========================================================================================================/n";
-    cout << "/n";
+    cout << "\n\n";
+    cout << " ==========================================================================================================\n";
+    cout << " >>>                                                                                                    <<<\n";
+    cout << " >>> FINAL TESTS                                                                                        <<<\n";
+    cout << " >>>                                                                                                    <<<\n";
+    cout << " >>> TEST FOR: CheckMillipedeCollision()                                                                <<<\n";
+    cout << " >>>                                                                                                    <<<\n";
+    cout << " ==========================================================================================================\n";
+    cout << "\n\n";
 
     for(int i=0; i<AmountOfTest; i++)
     {
@@ -1317,7 +2052,7 @@ int TEST__CheckMillipedeCollision(void)
         #if MODE_DEB == 1
         cout << "/n/n";
         cout << ">>>=========================================================<<</n";
-        cout << ">>>  MAIN_TCDEBOUG: " << i+1 <<                            "<<</n";
+        cout << ">>>  MAIN_TC_DEBOUG: " << i+1 <<                            "<<</n";
         cout << ">>>=========================================================<<</n";
         cout << endl;
         cout << "    ST1(P1)(P2) >> "
@@ -1331,13 +2066,19 @@ int TEST__CheckMillipedeCollision(void)
         #endif // MODE_DEB
 
 
-        int ret=1;
-        ret = CHECK_MillipedeCollision(&MILL1, &MILL2);
+        int ret = CHECK_MillipedeCollision(&MILL1, &MILL2);
 
-        if(i+1<10)cout << "TC" <<i+1<<" : ";
-        else cout << "TC" <<i+1<<": ";
 
-        if(ret == TT[i].expected_CollisionState)
+        if(i+1<10)  cout << "TC" <<i+1<<" : ";
+        else        cout << "TC" <<i+1<<": ";
+
+
+        if
+        (
+          ret
+          == 
+          TT[i].expected_CollisionState
+        )
         {
             TEST_PASS;
         }
@@ -1346,6 +2087,8 @@ int TEST__CheckMillipedeCollision(void)
             TEST_FAIL;
         }
 
+
+
         cout << "  ||  expected: ";
         if(collisionYES == TT[i].expected_CollisionState) cout << "TAK";
         else cout << "NIE";
@@ -1353,9 +2096,13 @@ int TEST__CheckMillipedeCollision(void)
         if(collisionYES == ret) cout << "TAK";
         else cout << "NIE";
         cout << "  ||  speed1: " << TT[i].speed1;
+        gotox(90);
         cout << "  ||  Des: " << TT[i].TestDescriptions;
         cout << endl;
+
     }
 
     return -1;
 }
+
+
