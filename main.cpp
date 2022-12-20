@@ -989,7 +989,7 @@ void DETERMINE_LineCollisions(MILLPEDE *T1, MILLPEDE *T2, LINCOL* tab)
         if(t<0)     tab[1].Collision = collisionNO;
         else        tab[1].x = T1->P1.x + T1->speed * t; 
 
-        t = (T1->P2.x - T1->P1.x)/(T1->speed - T2->speed);
+        t = (T1->P2.x - T2->P1.x)/(T1->speed - T2->speed);
         if(t<0)     tab[2].Collision = collisionNO;
         else        tab[2].x = T1->P2.x + T2->speed * t; 
 
