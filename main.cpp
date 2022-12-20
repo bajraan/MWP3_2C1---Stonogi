@@ -3,7 +3,7 @@
 #include <math.h>
 #include <sstream>
 
-#define MODE_DEB     0
+#define MODE_DEB     1
 #define MODE_TEST    1
 #define PRINT_RAPORT 0
 
@@ -516,6 +516,10 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2)
         T1->CrossPointExist = "YES";
         T2->CrossPointExist = "YES";
 
+
+    // TODO
+    // DIVIDING BY ZERO
+
     CP.x =
         (T1->lin.B * T2->lin.C - T2->lin.B * T1->lin.C)
                                /
@@ -526,6 +530,7 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2)
         (T2->lin.A * T1->lin.C - T2->lin.C * T1->lin.A )
                                /
                     (T2->lin.A - T1->lin.A);
+
 
     CP.y =
         (T1->lin.C * T2->lin.A - T2->lin.C * T1->lin.A)
@@ -539,7 +544,7 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2)
 
     }
     #if MODE_DEB == 1
-    cout << " >> CP: (" << T1->CrossPoint.x <<","<<T1->CrossPoint.y <<")" << endl << endl;
+    cout << " >> sdfasfdsaf CP: (" << T1->CrossPoint.x <<","<<T1->CrossPoint.y <<")" << endl << endl;
     #endif // MODE_DEB
 }
 
@@ -2206,7 +2211,7 @@ int TEST__CheckMillipedeCollision(void)
     string  TestDescriptions;
     };
 
-    int AmountOfTest = 40;
+    int AmountOfTest = 44;
     TESTTable TT[AmountOfTest] =
     {
     //=========================================================
@@ -2351,9 +2356,26 @@ int TEST__CheckMillipedeCollision(void)
     99999, -99998 ,  99999,-99999 ,   1   , // TC39 kolizja w CP (99999,0) 
     99999,  99998 ,  99999, 99999 ,   1   , collisionYES,"TRAJEKTORIE PIONOWE, KOLIKZJA BLISKO GRANICY",
    -99999, -99998 , -99999,-99999 ,   1   , // TC40
-   -99999,  99998 , -99999, 99999 ,   1   , collisionYES,"TRAJEKTORIE PIONOWE, KOLIKZJA BLISKO GRANICY"
+   -99999,  99998 , -99999, 99999 ,   1   , collisionYES,"TRAJEKTORIE PIONOWE, KOLIKZJA BLISKO GRANICY",
 
+//==============================================================================================================
+// cases form the internet
+//==============================================================================================================
+//               |                |       |  exp        |
+//       P1      |       P2       | speed |  collision  |  Descriptions
+//               |                |       |             |
 
+        0, 5      ,      0, 8      ,   3   ,// TC41 kolizja w CP (0,0) 
+        1, 1      ,      3, 3      ,   1   , collisionYES,"Similar coeficientds (A,B,C) ST1:(1,0,0)  ST2:(1,-1,0)",
+
+        0, 5      ,      0, 8      ,   3   ,// TC42 kolizja w CP (0,0) 
+       -1, 1      ,     -3, 3      ,   1   , collisionYES,"Similar coeficientds (A,B,C) ST1:(1,0,0)  ST2:(-1,-1,0)",
+        
+        0, 5      ,      0, 8      ,   3   ,// TC43 kolizja w CP (0,0) 
+       -1,-1      ,     -3,-3      ,   1   , collisionYES,"Similar coeficientds (A,B,C) ST1:(1,0,0)  ST2:(1,-1,0)",
+        
+        0, 5      ,      0, 8      ,   3   ,// TC44 kolizja w CP (0,0) 
+        1,-1      ,      3,-3      ,   1   , collisionYES,"Similar coeficientds (A,B,C) ST1:(1,0,0)  ST2:(-1,-1,0)",
     };
 
 
