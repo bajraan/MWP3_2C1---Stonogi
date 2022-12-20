@@ -330,8 +330,8 @@ int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
                 {
                     return collisionYES;
                 }
-            }return collisionNO;
-        }
+            }
+        }return collisionNO;
     }
     else if
     (
