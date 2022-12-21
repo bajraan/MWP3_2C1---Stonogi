@@ -3,7 +3,7 @@
 #include <math.h>
 #include <sstream>
 
-#define MODE_DEB     1
+#define MODE_DEB     0
 #define MODE_TEST    1
 #define PRINT_RAPORT 0
 
@@ -506,40 +506,30 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2)
 
     Point CP;
 
-    if(T1->lin.A == T2->lin.A)
-    {
-        T1->CrossPointExist = "NO";
-        T2->CrossPointExist = "NO";
-    }
-    else
-    {
-        T1->CrossPointExist = "YES";
-        T2->CrossPointExist = "YES";
+    T1->CrossPointExist = "YES";
+    T2->CrossPointExist = "YES";
 
 
     // TODO: DIVIDING BY ZERO
     // Dividing by zero exception is not nedded, due to math theory. // PBA comment
     // if lines are not parraler they always have intersection.      // PBA comment
 
-
-
     CP.x =
         (T1->lin.B * T2->lin.C - T2->lin.B * T1->lin.C)
                                /
         (T1->lin.A *T2->lin.B  - T2->lin.A * T1->lin.B );
-
 
     CP.y =
         (T1->lin.C * T2->lin.A - T2->lin.C * T1->lin.A)
                                /
         (T1->lin.A *T2->lin.B  - T2->lin.A * T1->lin.B );
 
+
     T1->CrossPoint.x = CP.x;
     T1->CrossPoint.y = CP.y;
     T2->CrossPoint.x = CP.x;
     T2->CrossPoint.y = CP.y;
 
-    }
     #if MODE_DEB == 1
     cout << " >> sdfasfdsaf CP: (" << T1->CrossPoint.x <<","<<T1->CrossPoint.y <<")" << endl << endl;
     #endif // MODE_DEB
