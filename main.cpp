@@ -517,8 +517,9 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2)
         T2->CrossPointExist = "YES";
 
 
-    // TODO
-    // DIVIDING BY ZERO
+    // TODO: DIVIDING BY ZERO
+    // Dividing by zero exception is not nedded, due to math theory. // PBA comment
+    // if lines are not parraler they always have intersection.      // PBA comment
 
     CP.x =
         (T1->lin.B * T2->lin.C - T2->lin.B * T1->lin.C)
