@@ -521,16 +521,12 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2)
     // Dividing by zero exception is not nedded, due to math theory. // PBA comment
     // if lines are not parraler they always have intersection.      // PBA comment
 
+
+
     CP.x =
         (T1->lin.B * T2->lin.C - T2->lin.B * T1->lin.C)
                                /
         (T1->lin.A *T2->lin.B  - T2->lin.A * T1->lin.B );
-
-
-    CP.y =
-        (T2->lin.A * T1->lin.C - T2->lin.C * T1->lin.A )
-                               /
-                    (T2->lin.A - T1->lin.A);
 
 
     CP.y =
