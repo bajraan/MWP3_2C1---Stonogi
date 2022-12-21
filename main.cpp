@@ -2198,7 +2198,7 @@ int TEST__CheckMillipedeCollision(void)
     string  TestDescriptions;
     };
 
-    int AmountOfTest = 44;
+    int AmountOfTest = 47;
     TESTTable TT[AmountOfTest] =
     {
     //=========================================================
@@ -2363,6 +2363,15 @@ int TEST__CheckMillipedeCollision(void)
         
         0, 5      ,      0, 8      ,   3   ,// TC44 kolizja w CP (0,0) 
         1,-1      ,      3,-3      ,   1   , collisionYES,"Similar coeficientds (A,B,C) ST1:(1,0,0)  ST2:(-1,-1,0)",
+        
+       -1,-1      ,     -3,-3      ,   1   ,
+        1,-1      ,      3,-3      ,   3   , collisionYES,"Case form the internet",
+        
+        1, 1      ,      3, 3      ,   1   ,
+       -1, 1      ,     -3, 3      ,   3   , collisionYES,"Case form the internet",
+        
+        1, 1      ,     10,10      ,   1   ,
+       -1, 1      ,    -10,10      ,  10   , collisionYES,"Case form the internet"  
     };
 
 
