@@ -3,7 +3,7 @@
 #include <math.h>
 #include <sstream>
 
-#define MODE_DEB     1
+#define MODE_DEB     0
 #define MODE_TEST    1
 #define PRINT_RAPORT 0
 
