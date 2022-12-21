@@ -3,7 +3,7 @@
 #include <math.h>
 #include <sstream>
 
-#define MODE_DEB     0
+#define MODE_DEB     1
 #define MODE_TEST    1
 #define PRINT_RAPORT 0
 
@@ -738,7 +738,7 @@ void DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2)
     }
     else if(T2->CrossTimeStart < T1->CrossTimeStart)
     {
-        if (T2->CrossTimeEnd < T1->CrossTimeStart)
+        if     (T2->CrossTimeEnd < T1->CrossTimeStart)
         {
             T1->TimesOverleap = overleapExist_NO;
             T2->TimesOverleap = overleapExist_NO;
@@ -753,14 +753,13 @@ void DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2)
             T1->TimesOverleap = overleapExist_YES;
             T2->TimesOverleap = overleapExist_YES;
         }
-
-
     }
     else
     {
         T1->TimesOverleap = overleapExist_YES;
         T2->TimesOverleap = overleapExist_YES;
     }
+
 
     #if MODE_DEB == 1
     if(overleapExist_YES == T1->TimesOverleap)
@@ -1032,6 +1031,7 @@ void TRANSFORM_PointToOriginal(MILLPEDE *MILL, Shift_M sT, Rotate_M rT, Point P)
     #if     MODE_DEB == 1
     cout << "Rotated P: " << MILL->CrossPoint.x << "," << MILL->CrossPoint.y << ")" << endl;
     cout << endl;
+    #endif
 
 
     if(MILL->lin.A >= 0)
@@ -1056,17 +1056,9 @@ void TRANSFORM_PointToOriginal(MILLPEDE *MILL, Shift_M sT, Rotate_M rT, Point P)
     cout << "Shifted P: " <<MILL->CrossPoint.x << "," << MILL->CrossPoint.y << endl;
     #endif
 
-    //
-    // TODO    PRZY POWROCIE NAJPIERW ROTUJ PUZNIEJ PRZESUN
-    //
-
-
-    cout << "NAJPERW ROTUJ POZNIEJ PRZESUN" << endl;
-
-    #endif
-
-
 }
+
+
 
 
 
@@ -1880,6 +1872,7 @@ int TEST__DETERMINE_RotateMatrix(void)
     };
 
 
+
     for(int i=0; i<AmountOfTest; i++)
     {
         Rotate_M    RT;
@@ -2198,7 +2191,7 @@ int TEST__CheckMillipedeCollision(void)
     string  TestDescriptions;
     };
 
-    int AmountOfTest = 44;
+    int AmountOfTest = 47;
     TESTTable TT[AmountOfTest] =
     {
     //=========================================================
@@ -2363,6 +2356,15 @@ int TEST__CheckMillipedeCollision(void)
         
         0, 5      ,      0, 8      ,   3   ,// TC44 kolizja w CP (0,0) 
         1,-1      ,      3,-3      ,   1   , collisionYES,"Similar coeficientds (A,B,C) ST1:(1,0,0)  ST2:(-1,-1,0)",
+
+       -1,-1      ,     -3,-3      ,   1   ,
+        1,-1      ,      3,-3      ,   3   , collisionYES,"Case form the internet",
+        
+        1, 1      ,      3, 3      ,   1   ,
+       -1, 1      ,     -3, 3      ,   3   , collisionYES,"Case form the internet",
+        
+        1, 1      ,     10,10      ,   1   ,
+       -1, 1      ,    -10,10      ,  10   , collisionYES,"Case form the internet"     
     };
 
 
@@ -2401,7 +2403,7 @@ int TEST__CheckMillipedeCollision(void)
         #if MODE_DEB == 1
         cout << "\n\n";
         cout << ">>>=========================================================<<<\n";
-        cout << ">>>  MAIN_TC_DEBOUG: " << i+1 <<                           "<<<\n";
+        cout << ">>>  MAIN_TC_DEBOUG: "<< i+1 <<"                            <<<\n";
         cout << ">>>=========================================================<<<\n";
         cout << endl;
         cout << "    ST1(P1)(P2) >> "
