@@ -3,7 +3,7 @@
 #include <math.h>
 #include <sstream>
 
-#define MODE_DEB     0
+#define MODE_DEB     1
 #define MODE_TEST    1
 #define PRINT_RAPORT 0
 
@@ -991,21 +991,21 @@ void DETERMINE_LineCollisions(MILLPEDE *T1, MILLPEDE *T2, LINCOL* tab)
         tab[2].Collision = collisionYES;
         tab[3].Collision = collisionYES;
         
-        t = (T1->P1.x - T2->P1.x)/(T1->speed - T2->speed);
+        t = fabs(T1->P1.x - T2->P1.x)/fabs(T1->speed - T2->speed);
         if(t<0)     tab[0].Collision = collisionNO;
         else        tab[0].x = T1->P1.x + T1->speed * t; 
 
-        t = (T1->P1.x - T2->P2.x)/(T1->speed - T2->speed);
+        t = fabs(T1->P1.x - T2->P2.x)/fabs(T1->speed - T2->speed);
         if(t<0)     tab[1].Collision = collisionNO;
         else        tab[1].x = T1->P1.x + T1->speed * t; 
 
-        t = (T1->P2.x - T2->P1.x)/(T1->speed - T2->speed);
+        t = fabs(T1->P2.x - T2->P1.x)/fabs(T1->speed - T2->speed);
         if(t<0)     tab[2].Collision = collisionNO;
-        else        tab[2].x = T1->P2.x + T2->speed * t; 
+        else        tab[2].x = T1->P2.x + T1->speed * t; 
 
-        t = (T1->P2.x - T2->P2.x)/(T1->speed - T2->speed);
+        t = fabs(T1->P2.x - T2->P2.x)/fabs(T1->speed - T2->speed);
         if(t<0)     tab[3].Collision = collisionNO;
-        else        tab[3].x = T1->P2.x + T2->speed * t; 
+        else        tab[3].x = T1->P2.x + T1->speed * t; 
     }
 
 
@@ -1016,8 +1016,17 @@ void DETERMINE_LineCollisions(MILLPEDE *T1, MILLPEDE *T2, LINCOL* tab)
     cout << tab[2].Collision << " | CPx: (" << tab[2].x << ")" << endl;
     cout << tab[3].Collision << " | CPx: (" << tab[3].x << ")" << endl;
     cout << endl;
-    #endif // MODE_DE3
+    cout << "t1: " << fabs(T1->P1.x - T2->P1.x)/fabs(T1->speed - T2->speed) << endl;
+    cout << "t2: " << fabs(T1->P1.x - T2->P2.x)/fabs(T1->speed - T2->speed) << endl;
+    cout << "t3: " << fabs(T1->P2.x - T2->P1.x)/fabs(T1->speed - T2->speed) << endl;
+    cout << "t4: " << fabs(T1->P2.x - T2->P2.x)/fabs(T1->speed - T2->speed) << endl;
+    cout << endl;
+    cout << "s1 = " << T1->P1.x << "+" << T1->speed << " * t1" << endl;
+    cout << "s1 = " << T1->P1.x << "+" << T1->speed << " * t2" << endl;
+    cout << "s1 = " << T1->P2.x << "+" << T1->speed << " * t3" << endl;
+    cout << "s1 = " << T1->P2.x << "+" << T1->speed << " * t4" << endl;
 
+    #endif // 
 
 }
 
@@ -1025,7 +1034,13 @@ void DETERMINE_LineCollisions(MILLPEDE *T1, MILLPEDE *T2, LINCOL* tab)
 
 void DETERMINE_SpeedSignCorrection(MILLPEDE *T)
 {
-        if(T->P2.x < T->P1.x) T->speed *= -1; 
+        if(T->P2.x < T->P1.x) T->speed *=  1;
+        else                  T->speed *= -1;
+        
+        //if(T->P2.x < T->P1.x) T->speed *= -1;  
+        
+        cout << endl << "SpeedCor: "; 
+        cout << T->P2.x << "<" << T->P1.x << endl;
 }
 
 
@@ -1048,41 +1063,30 @@ void TRANSFORM_PointToOriginal(MILLPEDE *MILL, Shift_M sT, Rotate_M rT, Point P)
 
 
     #if     MODE_DEB == 1
-    cout << "Rotated P: " << MILL->CrossPoint.x << "," << MILL->CrossPoint.y << ")" << endl;
     cout << endl;
-
+    cout << " INPUT  P: " << P.x << "," << P.y << endl;
+    cout << "Rotated P: " << MILL->CrossPoint.x << "," << MILL->CrossPoint.y << ")" << endl;
+    #endif
 
     if(MILL->lin.A >= 0)
     {
-    MILL->CrossPoint.x = P.x - sT.Tx;
-    MILL->CrossPoint.y = P.y - sT.Ty;
+    MILL->CrossPoint.x = MILL->CrossPoint.x - sT.Tx;
+    MILL->CrossPoint.y = MILL->CrossPoint.y - sT.Ty;
     }
 
 
     if(MILL->lin.A < 0)
     {
-    MILL->CrossPoint.x = P.x + sT.Tx;
-    MILL->CrossPoint.y = P.y + sT.Ty;
+    MILL->CrossPoint.x = MILL->CrossPoint.x + sT.Tx;
+    MILL->CrossPoint.y = MILL->CrossPoint.y + sT.Ty;
     }
 
 
 
     #if     MODE_DEB == 1
-    cout << endl;
-    cout << endl;
-    cout << "        P: " << P.x << "," << P.y << endl;
     cout << "Shifted P: " <<MILL->CrossPoint.x << "," << MILL->CrossPoint.y << endl;
+    cout << " OUTPUT P: " <<MILL->CrossPoint.x << "," << MILL->CrossPoint.y << endl;
     #endif
-
-    //
-    // TODO    PRZY POWROCIE NAJPIERW ROTUJ PUZNIEJ PRZESUN
-    //
-
-
-    cout << "NAJPERW ROTUJ POZNIEJ PRZESUN" << endl;
-
-    #endif
-
 
 }
 
@@ -2216,7 +2220,7 @@ int TEST__CheckMillipedeCollision(void)
     string  TestDescriptions;
     };
 
-    int AmountOfTest = 47;
+    int AmountOfTest = 48;
     TESTTable TT[AmountOfTest] =
     {
     //=========================================================
@@ -2389,7 +2393,11 @@ int TEST__CheckMillipedeCollision(void)
        -1, 1      ,     -3, 3      ,   3   , collisionYES,"Case form the internet",
         
         1, 1      ,     10,10      ,   1   ,
-       -1, 1      ,    -10,10      ,  10   , collisionYES,"Case form the internet"  
+       -1, 1      ,    -10,10      ,  10   , collisionYES,"Case form the internet",
+
+        0,99999   ,     0,99998    ,   2,
+        0,0       ,     0,-100     ,100000, collisionYES, "Collision at playZone border"
+
     };
 
 
