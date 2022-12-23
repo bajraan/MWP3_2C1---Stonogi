@@ -16,6 +16,7 @@ HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 #define TEST_FAIL   SetConsoleTextAttribute(hConsole,12);cout<<"FAIL";SetConsoleTextAttribute(hConsole,7);
 
 #define FATAL_ERROR__DetermineCrossTimes SetConsoleTextAttribute(hConsole,12);cout<<"Fatal Error - DetermineCrossTimes()\n";SetConsoleTextAttribute(hConsole,7);
+#define FATAL_ERROR__DetermineOverleap   SetConsoleTextAttribute(hConsole,12);cout<<"Fatal Error - DetermineOverleap()\n";SetConsoleTextAttribute(hConsole,7);
 #endif
 
 #if     PRINT_RAPORT == 1
@@ -717,9 +718,20 @@ void DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2)
     cout << "DetermineOverleap";
     #endif // MODE_DEB
 
-    if(T1->CrossTimeStart < T2->CrossTimeStart)
+
+    if(fabs(T2->CrossTimeStart - T1->CrossTimeStart) < 1e-10)
     {
-        if      (T1->CrossTimeEnd < T2->CrossTimeStart)
+        T1->TimesOverleap = overleapExist_YES;
+        T2->TimesOverleap = overleapExist_YES;
+    }
+    else if(T1->CrossTimeStart < T2->CrossTimeStart)
+    {
+        if(fabs(T1->CrossTimeEnd - T2->CrossTimeStart) < 1e-10)
+        {
+            T1->TimesOverleap = overleapExist_YES;
+            T2->TimesOverleap = overleapExist_YES;
+        }
+        else if(T1->CrossTimeEnd < T2->CrossTimeStart)
         {
             T1->TimesOverleap = overleapExist_NO;
             T2->TimesOverleap = overleapExist_NO;
@@ -731,14 +743,19 @@ void DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2)
         }
         else
         {
-            T1->TimesOverleap = overleapExist_YES;
-            T2->TimesOverleap = overleapExist_YES;
+            #if     MODE_TEST == 1
+            FATAL_ERROR__DetermineOverleap;
+            #endif
         }
-
     }
     else if(T2->CrossTimeStart < T1->CrossTimeStart)
     {
-        if (T2->CrossTimeEnd < T1->CrossTimeStart)
+        if(fabs(T2->CrossTimeEnd - T1->CrossTimeStart)<1e-10)
+        {
+            T1->TimesOverleap = overleapExist_YES;
+            T2->TimesOverleap = overleapExist_YES;           
+        }
+        else if (T2->CrossTimeEnd < T1->CrossTimeStart)
         {
             T1->TimesOverleap = overleapExist_NO;
             T2->TimesOverleap = overleapExist_NO;
@@ -750,17 +767,18 @@ void DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2)
         }
         else
         {
-            T1->TimesOverleap = overleapExist_YES;
-            T2->TimesOverleap = overleapExist_YES;
+        #if     MODE_TEST == 1
+        FATAL_ERROR__DetermineOverleap;
+        #endif
         }
-
-
     }
     else
     {
-        T1->TimesOverleap = overleapExist_YES;
-        T2->TimesOverleap = overleapExist_YES;
+        #if     MODE_TEST == 1
+        FATAL_ERROR__DetermineOverleap;
+        #endif
     }
+
 
     #if MODE_DEB == 1
     if(overleapExist_YES == T1->TimesOverleap)
@@ -1915,7 +1933,7 @@ int TEST__DETERMINE_RotateMatrix(void)
         cout << endl;
         cout << endl;
         stringstream buf_1, buf_2, buf_3, buf_4, buf_5, buf_6, buf_7, buf_8, buf_9, buf_10;
-        string line  = "                                                                                           ";
+        string line  = "                                                                                         ";
         string line1 = line;
         string line2 = line;
         cout    << endl;
