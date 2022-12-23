@@ -106,6 +106,10 @@ struct LINCOL
 // utworzy† macierze transformacji;
 // na bazie wzoru prostej
 
+// TODO
+// wiecej testow z obracania trajektorii i obliczania w lincolissions
+
+
 struct PLZ
 {
     Point    PL1;
@@ -242,11 +246,8 @@ int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
           1 == ST1->lin.B       //    ->Set horizontalTransformed flag to 0; 
         )//======================================================================
         {
-
-
             h_ST1.horizontalTransformed = 0;
             h_ST2.horizontalTransformed = 0;   
-
 
             h_ST1.P1 = ST1->P1;
             h_ST1.P2 = ST1->P2;
@@ -262,11 +263,8 @@ int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
                                 //    ->Set horizontalTransformed flag to 1; 
         //=======================================================================
         {
-
-
             h_ST1.horizontalTransformed = 1;
             h_ST2.horizontalTransformed = 1;   
-
 
             DETERMINE_ShiftMatrix (ST1, &sT);
             DETERMINE_RotateMatrix(ST1, &rT, &rT_Reet);
@@ -287,12 +285,9 @@ int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
                   &h_ST2
                 );
 
-
             h_ST1.speed = ST1->speed;
             h_ST2.speed = ST2->speed;
-
         }
-
 
         //      TODO
         //      TODO
@@ -300,12 +295,9 @@ int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
         //      TODO
         //      TODO
 
-
         LINCOL  Lincoltable[4];
 
-
         DETERMINE_LineCollisions(&h_ST1, &h_ST2, Lincoltable);
-
 
         for(int i=0; i<4; i++)
         {
@@ -320,7 +312,6 @@ int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
                     Point x = {Lincoltable[i].x,0};
                     TRANSFORM_PointToOriginal(ST1, sT, rT_Reet, x);
                 }
-
 
                 if
                 (
@@ -428,53 +419,61 @@ void DETERMINE_LineEquation(MILLPEDE *T)
     cout << "DetermineLineEquation";
     #endif // MODE_DEB
 
-
-
-    // LINIA PIONOWA
-    if(T->P1.x == T->P2.x)
+    if
+    (//==============================================
+                        //  
+    T->P1.x == T->P2.x  //  VERTICAL TRAJECTORY
+                        //
+    )//==============================================
     {
         T->lin.A =  1;
         T->lin.B =  0;
         T->lin.C = -T->P1.x;
     }
-    // LINIA POZIOMA
-    else if(T->P1.y == T->P2.y)
+    else if
+    (//==============================================
+                        // 
+    T->P1.y == T->P2.y  // HORIZONTAL TRAJECTORY
+                        //
+    )//==============================================  
     {
         T->lin.A = 0;
         T->lin.B = 1;
         T->lin.C = -T->P1.y;
-
     }
     else
+    //==============================================
+                        // 
+                        //  ANGULAR TRAJECTORY
+                        //
+    //==============================================  
     {
-
         double Slope;
         double Intercept;
 
-    //
-    // SLOPE // Ax
-    //
-
+            //==============//
+            //              //
+            //  SLOPE       //  A
+            //              //
         if(0 == (max(T->P1.y, T->P2.y) - min(T->P1.y, T->P2.y))) Slope = 0;
         else Slope = (T->P2.y - T->P1.y) / (T->P2.x - T->P1.x);
-        T->lin.A = Slope;
-
-    //
-    // INTERCEPT // F
-    //
-
+        T->lin.A = Slope;   //
+            //              //
+            //              //
+            //  INTERCEPT   //  C
+            //              //
         if(0 == Slope) Intercept = T->P1.x;
         else Intercept = T->P1.y - Slope * T->P1.x;
         T->lin.C = Intercept;
-
-    //
-    // By
-    //
-
-        T->lin.B = -1;
-
+            //              //
+            //              //
+            //              //  B
+            //              //
+        T->lin.B = -1;      //
+            //              //
+            //              //
+            //==============//
     }
-
 
     #if MODE_DEB == 1
     cout << " >> (A,B,C): " <<
@@ -482,14 +481,17 @@ void DETERMINE_LineEquation(MILLPEDE *T)
     ","  << T->lin.B <<
     ","  << T->lin.C <<
     ")"  << endl;
-    //cout << "B_: " << T->P1.y <<"-"<< T->lin.A <<"*"<< T->P1.x<< endl;
     #endif // MODE_DEB
 }
+
+
 
 int DETERMIEN_IntersectionScenario(MILLPEDE *ST1, MILLPEDE *ST2)
 {
     return 0;
 }
+
+
 
 //
 //
@@ -509,7 +511,6 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2)
 
     T1->CrossPointExist = "YES";
     T2->CrossPointExist = "YES";
-
 
     // TODO: DIVIDING BY ZERO
     // Dividing by zero exception is not nedded, due to math theory. // PBA comment
@@ -531,10 +532,12 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2)
     T2->CrossPoint.x = CP.x;
     T2->CrossPoint.y = CP.y;
 
+
     #if MODE_DEB == 1
     cout << " >> sdfasfdsaf CP: (" << T1->CrossPoint.x <<","<<T1->CrossPoint.y <<")" << endl << endl;
     #endif // MODE_DEB
 }
+
 
 
 /// @brief 
@@ -567,6 +570,8 @@ int CHECK_IF_CollisionPointbelongstoPlayZone(MILLPEDE *T, PLZ *PlayZone)
         return CrossPointBelongsToPlayZone_FALSE;
     }
 }
+
+
 
 int CHECK_IF_CrossPointBelongsToMillipedeForInitial(MILLPEDE *T)
 {
@@ -622,6 +627,8 @@ void DETERMINE_CrossDirection(MILLPEDE *T)
     else                           cout << "FATAL ERRor"    << endl;
     #endif // MODE_DEB
 }
+
+
 
 void DETERMINE_CrossTimes(MILLPEDE *T)
 {
@@ -801,30 +808,35 @@ void DETERMINE_ShiftMatrix(MILLPEDE*T, Shift_M *sT)
 
 
     if
-    (                   // Case:
-      1 == T->lin.A     // Vertical Trajectory
-      &&                //
-      0 == T->lin.B     //
-    )                   //
+    (//===============================================//  |
+      1 == T->lin.A         //                        //  |    
+      &&                    //  VERTICAL TRAJECTORY   //  |    
+      0 == T->lin.B         //                        //  |    
+    )//===============================================// ---------------
     {
         sT->Tx = T->lin.C;
         sT->Ty = 0;
 
     }
     else if
-    (
-      0 > T->lin.A
-    )
+    (//===============================================//           /
+                             //                       //          /
+      0 > T->lin.A          //  ANGULAR TRAJECTORY    //         /
+                            //  A<0                   //        /
+    )//===============================================// ---------------
     {
         sT->Tx = -(T->lin.C/T->lin.A);
         sT->Ty = 0;
-        //cout << endl << "CS2" << endl;
     }
     else
+     //===============================================//   \ 
+                            //                        //    \   
+                            //  ANGULAR TRAJECTORY    //     \  
+                            //  A>0                   //      \ 
+     //===============================================// ---------------
     {
         sT->Tx = T->lin.C;
         sT->Ty = 0;
-        //cout << endl << "CS3" << endl;
     }
 }
 
@@ -847,14 +859,15 @@ void DETERMINE_RotateMatrix(MILLPEDE*T,Rotate_M *rT, Rotate_M *rT_Reet)
     )//=========================================// ---------------
     {
 
-        rT->theta = M_PI/2;   // -90 deg
+        rT->theta = M_PI/2;
 
     }
-    else if(0 <= T->lin.A )                     //            /
-    //==========================================//       |   /                  
-                    // Angular Trajectory       //       |  /      
-                    //  0deg < theta < 90deg    //       | /       
-    //==========================================// --------------- 
+    else if
+    (//==========================================//            /     
+                        // Angular Trajectory    //       |   /      
+      0 <= T->lin.A     // Angular Trajectory    //       |  /                    
+                        // 0deg < theta < 90deg  //       | /  
+    )//==========================================// --------------- 
     {
 
          rT->theta = atan(T->lin.A);
@@ -882,7 +895,7 @@ void DETERMINE_RotateMatrix(MILLPEDE*T,Rotate_M *rT, Rotate_M *rT_Reet)
     rT->theta *= -1;  // Change ratate direction 
 
     // Return MATRIX  [ Theta < 0 ]
-    //      this matrix allows you fransform point.
+    //      this matrix allows you Transform point.
     //
     rT->T[0][0] = cos(rT->theta); rT->T[1][0] = -sin(rT->theta);
     rT->T[0][1] = sin(rT->theta); rT->T[1][1] =  cos(rT->theta);
@@ -2220,7 +2233,7 @@ int TEST__CheckMillipedeCollision(void)
     string  TestDescriptions;
     };
 
-    int AmountOfTest = 48;
+    int AmountOfTest = 49;
     TESTTable TT[AmountOfTest] =
     {
     //=========================================================
@@ -2395,8 +2408,12 @@ int TEST__CheckMillipedeCollision(void)
         1, 1      ,     10,10      ,   1   ,
        -1, 1      ,    -10,10      ,  10   , collisionYES,"Case form the internet",
 
-        0,99999   ,     0,99998    ,   2,
-        0,0       ,     0,-100     ,100000, collisionYES, "Collision at playZone border"
+        0,99999   ,      0,99998   ,   2   ,
+        0,0       ,      0,-100    ,100000 , collisionYES, "Collision at playZone border",
+
+    99999,99999   ,  99998,99998   ,sqrt(8)         ,
+        0,0       ,   -100,-100    ,sqrt(2) * 1e5  , collisionYES, "Collision at playZone border",
+
 
     };
 
