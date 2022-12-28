@@ -84,7 +84,6 @@ struct MILLPEDE
     Point   P2;
     double  speed;
     LINFAC  lin;
-    string  CrossPointExist;
     Point   CrossPoint;
     int     CPdirection;
     int     CPbelongsToInitial;
@@ -153,12 +152,12 @@ void DETERMINE_LineEquation(MILLPEDE *ST);
 void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2);
 void DETERMINE_CrossDirection(MILLPEDE *T1);
 void DETERMINE_CrossTimes(MILLPEDE *T1);
-void DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2);
+int  DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2);
 void DETERMINE_ShiftMatrix (MILLPEDE*T, Shift_M*sT);
 void DETERMINE_RotateMatrix(MILLPEDE*T,Rotate_M*rT, Rotate_M* rT_Reet);
 void DETERMINE_LineCollisions(MILLPEDE *T1, MILLPEDE *T2,LINCOL*tab);
 void DETERMINE_SpeedSignCorrection(MILLPEDE *T);
-int  CHECK_IF_CollisionPointbelongstoPlayZone(MILLPEDE *T, PLZ *PlayZone);
+int  CHECK_IF_CollisionPointbelongstoPlayZone(Point P, PLZ PlayZone);
 int  CHECK_IF_CrossPointBelongsToMillipedeForInitial(MILLPEDE *T1);
 void TRANSFORM_MillpedeToHorizontalMillpede(MILLPEDE*vT, Shift_M sT, Rotate_M rT, MILLPEDE*hT );
 void TRANSFORM_PointToOriginal(MILLPEDE *ST1, Shift_M sT, Rotate_M rT, Point P);
@@ -289,12 +288,6 @@ int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
             h_ST2.speed = ST2->speed;
         }
 
-        //      TODO
-        //      TODO
-        //      TODO SPRAWDZANIE FLAGI    h_ST1.horizontalTransformed
-        //      TODO
-        //      TODO
-
         LINCOL  Lincoltable[4];
 
         DETERMINE_LineCollisions(&h_ST1, &h_ST2, Lincoltable);
@@ -309,13 +302,13 @@ int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
                 1 == h_ST1.horizontalTransformed 
                 ) 
                 {
-                    Point x = {Lincoltable[i].x,0};
-                    TRANSFORM_PointToOriginal(ST1, sT, rT_Reet, x);
+                    Point h_collisionPoint = {Lincoltable[i].x,0};
+                    TRANSFORM_PointToOriginal(ST1, sT, rT_Reet, h_collisionPoint);
                 }
 
                 if
                 (
-                CHECK_IF_CollisionPointbelongstoPlayZone(ST1, &PlayZone)
+                CHECK_IF_CollisionPointbelongstoPlayZone(ST1->CrossPoint, PlayZone)
                 ==
                 CrossPointBelongsToPlayZone__TRUE
                 )
@@ -341,57 +334,60 @@ int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
 
         DETERMINE_CrossPoint(ST1,ST2);
 
-        if(ST1->CrossPointExist == "YES")
+
+        if
+        (
+        CrossPointBelongsToPlayZone_FALSE 
+        ==
+        CHECK_IF_CollisionPointbelongstoPlayZone(ST1->CrossPoint, PlayZone)
+        )
         {
-
-
-            CHECK_IF_CrossPointBelongsToMillipedeForInitial(ST1);
-
-
-            if
-            (
-            CrossPointBelongsToInitial_FALSE
-            ==
-            ST1->CPbelongsToInitial
-            )
-            {
-                DETERMINE_CrossDirection(ST1);
-                if(neg == ST1->CPdirection ) return collisionNO;
-            }
-
-
-            CHECK_IF_CrossPointBelongsToMillipedeForInitial(ST2);
-
-
-            if
-            (
-            CrossPointBelongsToInitial_FALSE
-            ==
-            ST2->CPbelongsToInitial
-            )
-            {
-                DETERMINE_CrossDirection(ST2);
-                if(neg == ST2->CPdirection ) return collisionNO;
-            }
-
-            DETERMINE_CrossTimes(ST1);
-            DETERMINE_CrossTimes(ST2);
-
-            DETERMINE_Overleap(ST1,ST2);
-
-            if
-            (
-            overleapExist_YES 
-            == 
-            ST1->TimesOverleap
-            )
-                    return collisionYES;
-            else
-                    return collisionNO;
+            return collisionNO; 
         }
-    else return collisionNO;
+
+
+        if
+        (
+        CrossPointBelongsToInitial_FALSE
+        ==
+        CHECK_IF_CrossPointBelongsToMillipedeForInitial(ST1)
+        )
+        {
+            DETERMINE_CrossDirection(ST1);
+            if(neg == ST1->CPdirection ) return collisionNO;
+        }
+
+        
+        if
+        (
+        CrossPointBelongsToInitial_FALSE
+        ==
+        CHECK_IF_CrossPointBelongsToMillipedeForInitial(ST2)
+        )
+        {
+            DETERMINE_CrossDirection(ST2);
+            if(neg == ST2->CPdirection ) return collisionNO;
+        }
+
+
+        DETERMINE_CrossTimes(ST1);
+        DETERMINE_CrossTimes(ST2);
+
+        
+        if
+        (
+        overleapExist_YES 
+        == 
+        DETERMINE_Overleap(ST1,ST2)
+        )
+        {
+            return collisionYES;
+        }
+        else
+        {
+            return collisionNO;
+        }
     }
-    return -1;
 }
 
 
@@ -509,9 +505,6 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2)
 
     Point CP;
 
-    T1->CrossPointExist = "YES";
-    T2->CrossPointExist = "YES";
-
     // TODO: DIVIDING BY ZERO
     // Dividing by zero exception is not nedded, due to math theory. // PBA comment
     // if lines are not parraler they always have intersection.      // PBA comment
@@ -534,7 +527,7 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2)
 
 
     #if MODE_DEB == 1
-    cout << " >> sdfasfdsaf CP: (" << T1->CrossPoint.x <<","<<T1->CrossPoint.y <<")" << endl << endl;
+    cout << " >>  CP: (" << T1->CrossPoint.x <<","<<T1->CrossPoint.y <<")" << endl << endl;
     #endif // MODE_DEB
 }
 
@@ -544,7 +537,7 @@ void DETERMINE_CrossPoint(MILLPEDE *T1, MILLPEDE *T2)
 /// @param T 
 /// @param PlayZone 
 /// @return 
-int CHECK_IF_CollisionPointbelongstoPlayZone(MILLPEDE *T, PLZ *PlayZone)
+int CHECK_IF_CollisionPointbelongstoPlayZone(Point P, PLZ PlayZone)
 {
 
     #if MODE_DEB == 1
@@ -553,15 +546,16 @@ int CHECK_IF_CollisionPointbelongstoPlayZone(MILLPEDE *T, PLZ *PlayZone)
     #endif // MODE_DEB
 
 
-    if  (
-        PlayZone->Min <= T->CrossPoint.x
-        &&
-        PlayZone->Max >= T->CrossPoint.x
-        &&
-        PlayZone->Min <= T->CrossPoint.y
-        &&
-        PlayZone->Max >= T->CrossPoint.y
-        )
+    if  
+    ( 
+    PlayZone.Min <= P.x
+    &&
+    PlayZone.Max >= P.x
+    &&
+    PlayZone.Min <= P.y
+    &&
+    PlayZone.Max >= P.y
+    )
     {
         return CrossPointBelongsToPlayZone__TRUE;
     }
@@ -718,7 +712,7 @@ void DETERMINE_CrossTimes(MILLPEDE *T)
 
 
 
-void DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2)
+int DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2)
 {
     #if MODE_DEB == 1
     cout << "                 " << endl;
@@ -794,6 +788,8 @@ void DETERMINE_Overleap(MILLPEDE *T1, MILLPEDE *T2)
         cout << " >> overleap_NO" << endl;
         cout << endl;
     #endif // MODE_DEB
+
+    return T1->TimesOverleap;
 
 }
 
@@ -1360,7 +1356,6 @@ int TEST__DETERMINE_CrossPoint(void)
     Point    S1P2;
     Point    S2P1;
     Point    S2P2;
-    string   Expected_CrossPointExist;
     Point    Expected_CP;
     };
 
@@ -1370,26 +1365,23 @@ int TEST__DETERMINE_CrossPoint(void)
     cout << " >>> " << endl;
     cout << endl;
 
-    int AmountOfTest = 11;
+    int AmountOfTest = 10;
     TESTTable TT[AmountOfTest] =
     {
-    //----------------|---------------|------|--------|
-    //ST1             |ST2            |CP    |CP      |
-    //P1      |P2     |P1     |P2     |EXIST |Expect  |
-    //        |       |       |       |      |        |
-          0, 2,   0, 4,  2,  0,  4,  0, "YES",   0,   0,
-         -2, 0,  -4, 0,  0, -2,  0, -4, "YES",   0,   0,
-         -1, 1,  -2, 2,  1,  1,  2,  2, "YES",   0,   0,
-         -1, 2,  -2, 3,  1,  2,  2,  3, "YES",   0,   1,
-          0, 1,  -1, 1,  1,  0,  1, -1, "YES",   1,   1,
-
-          1, 2,   0, 2,  2,  1,  2,  0, "YES",   2,   2,
-          1, 2,  -1, 2,  2,  1,  2, -1, "YES",   2,   2,
-         -4, 2,  -6, 2, -2,  0, -2, -2, "YES",  -2,   2,
-         -2,-1,  -2, 1, -1, -2,  1, -2, "YES",  -2,  -2,
-
-          0, 0,  -1, 1,  0,  1,  1,  2, "YES",-0.5, 0.5,
-          0, 1,   1, 1,  0,  2,  1,  2, "NO" , 'X', 'X'
+    
+    //ST1             |ST2            |CP      |
+    //P1      |P2     |P1     |P2     |Expect  |
+    //        |       |       |       |        |
+          0, 2,   0, 4,  2,  0,  4,  0,   0,   0,
+         -2, 0,  -4, 0,  0, -2,  0, -4,   0,   0,
+         -1, 1,  -2, 2,  1,  1,  2,  2,   0,   0,
+         -1, 2,  -2, 3,  1,  2,  2,  3,   0,   1,
+          0, 1,  -1, 1,  1,  0,  1, -1,   1,   1,
+          1, 2,   0, 2,  2,  1,  2,  0,   2,   2,
+          1, 2,  -1, 2,  2,  1,  2, -1,   2,   2,
+         -4, 2,  -6, 2, -2,  0, -2, -2,  -2,   2,
+         -2,-1,  -2, 1, -1, -2,  1, -2,  -2,  -2,
+          0, 0,  -1, 1,  0,  1,  1,  2,-0.5, 0.5,
     };
 
     for(int i=0; i<AmountOfTest; i++)
@@ -1429,17 +1421,10 @@ int TEST__DETERMINE_CrossPoint(void)
 
         if
         (
-         ("YES" == TT[i].Expected_CrossPointExist)
-         &&
          (fabs(MILL1.CrossPoint.x - TT[i].Expected_CP.x) <=1e-10)
          &&
          (fabs(MILL1.CrossPoint.y - TT[i].Expected_CP.y) <=1e-10)
         )
-        {
-            TEST_PASS;
-        }
-        else if
-        ("NO" == TT[i].Expected_CrossPointExist)
         {
             TEST_PASS;
         }
@@ -1448,8 +1433,7 @@ int TEST__DETERMINE_CrossPoint(void)
             TEST_FAIL;
         }
 
-        cout << " || ";
-        cout << MILL1.CrossPointExist << "?>" << TT[i].Expected_CrossPointExist  << "<";
+
         cout << " || ";
         cout << "exp CP: ("<< TT[i].Expected_CP.x<<","<<TT[i].Expected_CP.y<<")";
         cout << " || ";
@@ -1533,7 +1517,7 @@ int TEST__CHECK_IF_CollisionPointbelongstoPlayZone(void)
         (
          TT[i].expected_result 
          ==
-         CHECK_IF_CollisionPointbelongstoPlayZone(&MILL, &PlayZone)
+         CHECK_IF_CollisionPointbelongstoPlayZone(MILL.CrossPoint, PlayZone)
         )
         {
             TEST_PASS;
@@ -1550,7 +1534,7 @@ int TEST__CHECK_IF_CollisionPointbelongstoPlayZone(void)
         cout <<"  ||   ";
         cout <<"  exp: " << TT[i].expected_result;
         gotox(60);
-        cout <<"  obs: " << CHECK_IF_CollisionPointbelongstoPlayZone(&MILL, &PlayZone);
+        cout <<"  obs: " << CHECK_IF_CollisionPointbelongstoPlayZone(MILL.CrossPoint, PlayZone);
         cout << endl;
 
     }
@@ -2100,7 +2084,7 @@ int TEST__DETERMINE_RotateMatrix(void)
 int TEST__DETERMINE_LineCollisions(void)
 {
 
-    int AmountOfTest = 14;
+    int AmountOfTest = 17;
     struct TESTTable
     {
         Point       ST1P1; 
@@ -2219,18 +2203,40 @@ int TEST__DETERMINE_LineCollisions(void)
                                         collisionNO,1,      //       P2        P1                    P2         P1        //
                                         collisionNO,1,      // ------|========>|----------|----------|=========>|----->   //           
                                         collisionNO,1,      //                                                            //
-//----------------------------------------------------------//------------------------------------------------------------//  
+//----------------------------------------------------------//------------------------------------------------------------//
+       -3, 0     ,     -4, 0      ,   1   ,                 // -TC13-                                                     //
+       -1, 0     ,     -2, 0      ,   1   ,                 //           S1:1                            ST2:1            //
+                                        collisionNO,1,      //      -4         -3                    -2         -1        //
+                                        collisionNO,1,      //       P2        P1                    P2         P1   0    //
+                                        collisionNO,1,      // ------|========>|---------------------|=========>|----|->  //          
+                                        collisionNO,1,      //                                                            //
+//----------------------------------------------------------//------------------------------------------------------------//
+       -3, 0     ,     -4, 0      ,   2   ,                 // -TC14-                                                     //
+       -1, 0     ,     -2, 0      ,   1   ,                 //          ST1:2                            ST2:1            //
+                                        collisionYES,1,     //      -4         -3                    -2         -1        //
+                                        collisionYES,-1,    //       P2        P1                    P2         P1   0    //
+                                        collisionYES,2,     // ------|========>|---------------------|=========>|----|->  //          
+                                        collisionYES,0,     //                                                            //
+//----------------------------------------------------------//------------------------------------------------------------//
+       -3, 0     ,     -4, 0      ,   1   ,                 // -TC15-                                                     //
+       -1, 0     ,     -2, 0      ,   2   ,                 //           S1:1                             S2:2            //
+                                        collisionNO,1,     //      -4         -3                    -2         -1        //
+                                        collisionNO,1,     //       P2        P1                    P2         P1   0    //
+                                        collisionNO,1,     // ------|========>|---------------------|=========>|----|->  //          
+                                        collisionNO,1,     //                                                            //
 //----------------------------------------------------------//------------------------------------------------------------//
 //----------------------------------------------------------//------------------------------------------------------------//
 //----------------------------------------------------------//------------------------------------------------------------//
-       -1, 0     ,     -2, 0      ,   1   ,                 // -TC13-                                                     //
+//----------------------------------------------------------//------------------------------------------------------------//
+//----------------------------------------------------------//------------------------------------------------------------//
+       -1, 0     ,     -2, 0      ,   1   ,                 // -TC16-                                                     //
         1, 0     ,      2, 0      ,   1   ,                 //           S1:1                             S2:1            //
                                         collisionYES,0,     //      -2         -1         0          1          2         //
                                         collisionYES,0.5,   //       P2        P1                    P1         P2        //
                                         collisionYES,-0.5,  // ------|========>|----------|----------|<=========|----->   //           
                                         collisionYES,0,     //                                                            //
 //----------------------------------------------------------//------------------------------------------------------------//
-       -2, 0     ,     -1, 0      ,   1   ,                 // -TC14-                                                     //
+       -2, 0     ,     -1, 0      ,   1   ,                 // -TC17-                                                     //
         2, 0     ,      1, 0      ,   1   ,                 //           S1:1                             S2:1            //
                                         collisionNO,0,      //      -2         -1         0          1          2         //
                                         collisionNO,0,      //       P1        P2                    P2         P1        //
@@ -2531,7 +2537,7 @@ int TEST__CheckMillipedeCollision(void)
     string  TestDescriptions;
     };
 
-    int AmountOfTest = 67;
+    int AmountOfTest = 90;
     TESTTable TT[AmountOfTest] =
     {
     //=========================================================
@@ -2750,6 +2756,58 @@ int TEST__CheckMillipedeCollision(void)
         0, 100000 ,      1, 100001 ,  12   , collisionYES,"Case form the internet",
         0,-99999  ,      1,-99997  ,   1   ,// TC67
         4, 25004  ,     -4, 24998  ,   2   , collisionNO,"Case form the internet",
+
+       -1, 1      ,     -5, 5      ,   2   ,// TC68
+        1, 1      ,      2, 2      ,   3   , collisionYES,"Case form the internet", 
+       -1, 1      ,     -5, 5      ,   2   ,// TC69
+        1, 1      ,      2, 2      ,   15  , collisionNO,"Case form the internet",
+       -1, 1      ,     -5, 5      ,   2   ,// TC70
+       -1,-1      ,     -2,-2      ,   3   , collisionYES,"Case form the internet",
+       -1, 1      ,     -5, 5      ,   2   ,// TC71
+        2, 2      ,      1, 1      ,   3   , collisionNO,"Case form the internet",
+       -1, 1      ,     -5, 5      ,   2   ,// TC72
+       -2,-2      ,     -1,-1      ,   3   , collisionNO,"Case form the internet",
+
+        0, 5      ,      0, 8      ,   3   , // TC73
+        1, 1      ,      3, 3      ,   1   , collisionYES,"Case form the internet",
+        0, 8      ,      0, 5      ,   3   , // TC74
+        1, 1      ,      3, 3      ,   1   , collisionNO,"Case form the internet",
+        0, 5      ,      0, 8      ,   3   , // TC75
+        3, 3      ,      1, 1      ,   1   , collisionNO,"Case form the internet",
+        0, 8      ,      0, 5      ,   3   , // TC76
+        3, 3      ,      1, 1      ,   1   , collisionNO,"Case form the internet",
+        0, 5      ,      0, 8      ,   3   , // TC77
+        1, 1      ,      3, 3      ,   5   , collisionNO,"Case form the internet",
+        1, 1      ,      3, 3      ,   1   , // TC78
+        0, 5      ,      0, 8      ,   3   , collisionYES,"Case form the internet",
+        0, 5      ,      0, 8      ,   3   , // TC79
+        5, 0      ,      8, 0      ,   3   , collisionYES,"Case form the internet",
+        0, 8      ,      0, 5      ,   3   , // TC80
+        5, 0      ,      8, 0      ,   3   , collisionNO,"Case form the internet",
+        8, 0      ,      5, 0      ,   3   , // TC81
+        0, 8      ,      0, 5      ,   3   , collisionNO,"Case form the internet",
+        5, 0      ,      8, 0      ,   3   , // TC82
+        0, 5      ,      0, 8      ,   3   , collisionYES,"Case form the internet",
+        0, 5      ,      0, 8      ,   3   , // TC83
+        1,-1      ,      3,-3      ,   1   , collisionYES,"Case form the internet",
+        0, 8      ,      0, 5      ,   3   , // TC84
+        1,-1      ,      3,-3      ,   1   , collisionNO,"Case form the internet",
+       -5, 0      ,     -1, 0      ,   1   , // TC85
+        0, 5      ,      0, 8      ,   1   , collisionNO,"Case form the internet",
+       -1, 0      ,     -5, 0      ,   1   , // TC86
+        0, 5      ,      0, 8      ,   1   , collisionYES,"Case form the internet",
+       -1, 0      ,     -5, 0      ,   2   , // TC87
+        0, 5      ,      0, 8      ,   1   , collisionNO,"Case form the internet",
+       -1,-1      ,     -3,-3      ,   1   , // TC88
+        1,-1      ,      3,-3      ,   1   , collisionYES,"Case form the internet",
+       -1,-1      ,     -3,-3      ,   1   , // TC89
+        1,-1      ,      3,-3      ,   3   , collisionYES,"Case form the internet",
+
+
+   -99998,99999   , -99999, 99998  ,  100  , // TC90
+    99998,99999   ,  99999, 99998  ,  100  , collisionNO,"Collision out of border", 
+
+
     };
 
 
