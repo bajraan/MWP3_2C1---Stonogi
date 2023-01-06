@@ -3,6 +3,7 @@
 #include <math.h>
 #include <sstream>
 
+
 #define MODE_DEB     0
 #define MODE_TEST    1
 #define PRINT_RAPORT 0
@@ -17,6 +18,7 @@ HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 #define FATAL_ERROR__DetermineCrossTimes SetConsoleTextAttribute(hConsole,12);cout<<"Fatal Error - DetermineCrossTimes()\n";SetConsoleTextAttribute(hConsole,7);
 #define FATAL_ERROR__DetermineOverleap   SetConsoleTextAttribute(hConsole,12);cout<<"Fatal Error - DetermineOverleap()\n";SetConsoleTextAttribute(hConsole,7);
 #define FATAL_ERROR__DetermineSpeedSignCorrection   SetConsoleTextAttribute(hConsole,12);cout<<"Fatal Error - DetermineSpeedSignCorrection()\n";SetConsoleTextAttribute(hConsole,7);
+#define FATAL_ERROR__DetermineCrossDirection SetConsoleTextAttribute(hConsole,12);cout<<"Fatal Error - DetermineCrossDirection()\n";SetConsoleTextAttribute(hConsole,7);
 #endif
 
 #if     PRINT_RAPORT == 1
@@ -38,13 +40,6 @@ enum collision
 {
     collisionNO,
     collisionYES
-};
-
-enum intersection
-{
-    intersection_NO,
-    intersection_ONE,
-    intersection_INF
 };
 
 enum TimesOverleap
@@ -100,15 +95,6 @@ struct LINCOL
 };
 
 
-// 1) trajektoria musi zosta† przesuni©ta do pukut 0,0
-// 2) trajektoria musi zosta† obrucona wzgl©dem punkut 0,0
-// utworzy† macierze transformacji;
-// na bazie wzoru prostej
-
-// TODO
-// wiecej testow z obracania trajektorii i obliczania w lincolissions
-
-
 struct PLZ
 {
     Point    PL1;
@@ -144,7 +130,6 @@ struct Rotate_M
                     // T[2][2]    cos()
                     // T[KOLUMNY][WIERSZE]
 };
-
 
 
 int  CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2);
@@ -223,13 +208,13 @@ int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
     DETERMINE_LineEquation(ST2); // Determine line eqution for ST2
 
     if
-    ( 
-     ST1->lin.A == ST2->lin.A
-     &&
-     ST1->lin.B == ST2->lin.B
-     &&
-     ST1->lin.C == ST2->lin.C 
-    )
+    (//==========================================
+     ST1->lin.A == ST2->lin.A  //              //
+     &&                        //   INFINITE   //
+     ST1->lin.B == ST2->lin.B  // INTERSECTION //
+     &&                        //              //
+     ST1->lin.C == ST2->lin.C  //              //
+    )//==========================================
     {
 
         MILLPEDE    h_ST1;
@@ -296,7 +281,6 @@ int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
         {
             if(Lincoltable[i].Collision == collisionYES )
             {
-
                 if
                 ( 
                 1 == h_ST1.horizontalTransformed 
@@ -319,17 +303,24 @@ int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
         }return collisionNO;
     }
     else if
-    (
-    ST1->lin.A == ST2->lin.A
-    &&
-    ST1->lin.B == ST2->lin.B
-    &&
-    ST1->lin.C != ST2->lin.C
-    )
+    (//========================================
+    ST1->lin.A == ST2->lin.A //              // 
+    &&                       //   LACK OF    //         
+    ST1->lin.B == ST2->lin.B // INTERSECTION // 
+    &&                       //              //     
+    ST1->lin.C != ST2->lin.C //              //       
+    )//========================================
     {
         return collisionNO;
     }
     else
+    //=========================================
+                             //              //
+                             //     ONE      //
+                             // INTERSECTION //
+                             //              //
+                             //              //    
+    //=========================================
     {
 
         DETERMINE_CrossPoint(ST1,ST2);
@@ -482,13 +473,6 @@ void DETERMINE_LineEquation(MILLPEDE *T)
 
 
 
-int DETERMIEN_IntersectionScenario(MILLPEDE *ST1, MILLPEDE *ST2)
-{
-    return 0;
-}
-
-
-
 //
 //
 //
@@ -556,13 +540,8 @@ int CHECK_IF_CollisionPointbelongstoPlayZone(Point P, PLZ PlayZone)
     &&
     PlayZone.Max >= P.y
     )
-    {
-        return CrossPointBelongsToPlayZone__TRUE;
-    }
-    else
-    {
-        return CrossPointBelongsToPlayZone_FALSE;
-    }
+         return CrossPointBelongsToPlayZone__TRUE;
+    else return CrossPointBelongsToPlayZone_FALSE;
 }
 
 
@@ -608,10 +587,14 @@ void DETERMINE_CrossDirection(MILLPEDE *T)
     cpp1 = sqrt(pow(T->P1.x - T->CrossPoint.x,2) + pow(T->P1.y - T->CrossPoint.y,2));
     cpp2 = sqrt(pow(T->P2.x - T->CrossPoint.x,2) + pow(T->P2.y - T->CrossPoint.y,2));
 
-    if      (cpp1 == cpp2) cout << endl << "FATAL ERROR" << endl;
-    else if (cpp1 <  cpp2) T->CPdirection = pos;
+    if      (cpp1 <  cpp2) T->CPdirection = pos;
     else if (cpp1 >  cpp2) T->CPdirection = neg;
-    else                   cout << endl << "FATAL ERROR" << endl;
+    else
+    {
+        #if          MODE_TEST == 1
+        FATAL_ERROR__DetermineCrossDirection;  
+        #endif    
+    }
 
 
     #if MODE_DEB == 1
@@ -669,17 +652,17 @@ void DETERMINE_CrossTimes(MILLPEDE *T)
         T->CrossTimeStart = S1/T->speed;
         T->CrossTimeEnd   = S2/T->speed;
     }
-    else if(S1>S2)
-    {
-        T->CrossTimeStart = S2/T->speed;
-        T->CrossTimeEnd   = S1/T->speed;
-    }
+    else if(S1>S2)                          // PBA comment
+    {                                       // Case will never occur
+        T->CrossTimeStart = S2/T->speed;    //
+        T->CrossTimeEnd   = S1/T->speed;    //
+    }                                       //
     else
-    {       
-        #if          MODE_TEST == 1
-        FATAL_ERROR__DetermineCrossTimes;
-        #endif
-    }       
+    {                                       // PBA comment
+        #if          MODE_TEST == 1         // Case occurs only if 
+        FATAL_ERROR__DetermineCrossTimes;   // CP belongs to inital
+        #endif                              //
+    }                                       //
 
 
 
@@ -691,22 +674,16 @@ void DETERMINE_CrossTimes(MILLPEDE *T)
     cout << "P2: (" << T->P2.x << "," << T->P2.y << ")" << endl;
     cout << "S1: " << S1 << endl;
     cout << "S2: " << S2 << endl;
-    if(S1>S2)
-    {
+    cout << endl;
+    cout.precision(15);
     cout << "CrossTimeStart:          >> "  << T->CrossTimeStart << endl;
-    cout << "Calc: " << S2<<"/"<<T->speed   << endl;
     cout << "CrossTimeEnd:            >> "  << T->CrossTimeEnd << endl;
-    cout << "Calc: " << S1<<"/"<<T->speed   << endl;
-    }
-    if(S1<S2)
-    {
-    cout << "CrossTimeStart:          >> "  <<T->CrossTimeStart << endl;
-    cout << "Calc: " << S1<<"/" <<T->speed          << endl;
-    cout << "CrossTimeEnd:            >> "  <<T->CrossTimeEnd   << endl;
-    cout << "Calc: " << S2<<"/" <<T->speed          << endl;
-    }
     cout << "-----------------------------"  << endl;
     cout << endl;
+
+
+
+
     #endif // MODE_DEB
 }
 
@@ -1209,16 +1186,16 @@ void TerminalSettings(void){
 void TestScenarioSettings()
 {
     #if MODE_TEST == 1
-    TEST__DETERMINE_LineEquation();
-    TEST__DETERMINE_CrossPoint();
-    TEST__DETERMINE_CrossDirection();
-    TEST__DETERMINE_CrossTimes();
-    TEST__DETERMINE_Overleap();
-    TEST__DETERMINE_LineCollisions();
-    TEST__CHECK_IF_CrossPointBelongsToMillipedeForInitial();
-    TEST__CHECK_IF_CollisionPointbelongstoPlayZone();
-    TEST__DETERMINE_RotateMatrix();
-    TEST__TRANSFORM_MillpedeToHorizontalMillpede();
+    //TEST__DETERMINE_LineEquation();
+    //TEST__DETERMINE_CrossPoint();
+    //TEST__DETERMINE_CrossDirection();
+    //TEST__DETERMINE_CrossTimes();
+    //TEST__DETERMINE_Overleap();
+    //TEST__DETERMINE_LineCollisions();
+    //TEST__CHECK_IF_CrossPointBelongsToMillipedeForInitial();
+    //TEST__CHECK_IF_CollisionPointbelongstoPlayZone();
+    //TEST__DETERMINE_RotateMatrix();
+    //TEST__TRANSFORM_MillpedeToHorizontalMillpede();
 
     TEST__CheckMillipedeCollision();
 
@@ -1231,7 +1208,6 @@ void gotox(short x)
 { 
 
     short y;
-    short jeden = 1;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleScreenBufferInfo (output, &csbi);
@@ -1261,7 +1237,7 @@ int TEST__DETERMINE_LineEquation( void )
 
     TESTTable TT[AmountOfTest] = {
 
-	// linia pionowa
+	// VERTICAL LINE
     //----------------| |-----------------|
     //        |       | | Expected LINFAC |
     //  P1    |  P2   | |  A  |  B  |  C  |
@@ -1271,7 +1247,7 @@ int TEST__DETERMINE_LineEquation( void )
           0, 4,   0, 2,      1,    0,    0,
           3, 4,   3,-2,      1,    0,   -3,
 
-	// linia pozioma
+	// HORIZONTAL LINE
     //-----------------| |-----------------|
     //        |        | | Expected LINFAC |
     //   P1   |   P2   | |  A  |  B  |  C  |
@@ -1280,7 +1256,7 @@ int TEST__DETERMINE_LineEquation( void )
         2,10  ,  4,10  ,      0,    1,  -10,
         2,-5  ,  4,-5  ,      0,    1,    5,
 
-	// linia skosna
+	// ANGULAR LINE
     //----------------| |-------------------------------|
     //        |       | | Expected LINFAC               |
     //  P1    |  P2   | |      A      | B |      C      |
@@ -1347,8 +1323,6 @@ int TEST__DETERMINE_LineEquation( void )
 
 int TEST__DETERMINE_CrossPoint(void)
 {
-
-    // 0 = ST2A * X + ST2B + Y
 
     struct TESTTable
     {
@@ -2537,7 +2511,7 @@ int TEST__CheckMillipedeCollision(void)
     string  TestDescriptions;
     };
 
-    int AmountOfTest = 90;
+    int AmountOfTest = 103;
     TESTTable TT[AmountOfTest] =
     {
     //=========================================================
@@ -2587,7 +2561,7 @@ int TEST__CheckMillipedeCollision(void)
         2,    2,    2,     0,     1, collisionNO,"brak przeciecia Trajektorie rownolegle pionowe",
 
         3,    3,   -3,     3,   100, //TC15
-        3,   -3,   -3,   -3.,    10, collisionNO,"brak przeciecia Trajektorie rownloegle poziome",
+        3,   -3,   -3,    -3,    10, collisionNO,"brak przeciecia Trajektorie rownloegle poziome",
 
 //|==============================================================================================================|
 //| TRAJEKTORIE POZIOME NAKLADAJACE SIE                                                                     |
@@ -2608,7 +2582,7 @@ int TEST__CheckMillipedeCollision(void)
       1,1  ,   2,1  ,  0.5  , collisionNO, "BRAK KOL - Trajektorie POZIOME sie nakladaja, ST2 dogoni ST1",
 
 //==============================================================================================================
-// TRAJEKTORIE PIONOWE NAKÅADAJÄ„CE SIÄ˜
+// TRAJEKTORIE PIONOWE NAKLADAJACE SIE
 //==============================================================================================================
 //        |        |       |  exp        |
 //   P1   |   P2   | speed |  collision  |  Descriptions
@@ -2807,15 +2781,59 @@ int TEST__CheckMillipedeCollision(void)
    -99998,99999   , -99999, 99998  ,  100  , // TC90
     99998,99999   ,  99999, 99998  ,  100  , collisionNO,"Collision out of border", 
 
+//==============================================================================================================
+// cases form the internet
+//==============================================================================================================
+//               |                |       |  exp        |
+//       P1      |       P2       | speed |  collision  |  Descriptions
+//               |                |       |             |
+       -1,-2     ,     -2,-1      ,   5   , // TC91
+        1, 2     ,      2, 1      ,   5   , collisionNO,"Paraller",
+       -1,-2     ,     -2,-1      ,   5   , // TC92
+        2, 1     ,      1, 2      ,   5   , collisionNO,"Paraller",
+        0, 3     ,      0, 2      ,   5   , // TC93
+       -1, 3     ,     -1, 1      ,   5   , collisionNO,"Paraller",
+
+        0, 0     ,      0, 1      ,   5   , // TC94
+        1, 0     ,      2, 0      ,   5   , collisionYES,"perpendicular",
+       -5, 4     ,     -6, 5      ,   5   , // TC95
+       -4, 5     ,     -3, 6      ,   5   , collisionYES,"perpendicular",
+
+        0, 100   ,      0,-100    ,   1   , // TC96
+       10, 0     ,     20, 0      , 100   , collisionYES,"perpendicular BULLET",
+       10, 0     ,     20, 0      , 100   , // TC97
+        0, 100   ,      0,-100    ,   1   , collisionYES,"perpendicular BULLET",
+       10, 0     ,     20, 0      , 100   , // TC98
+       -1, 100   ,     -1,-100    ,   1   , collisionYES,"perpendicular BULLET",
+
+
+//
+//  https://www.wolframalpha.com/input?i=LINE%28234%2C678%29%28-187%2C+7%29%2C+LINE%28400%2C521%29%28847%2C-14%29
+//
+//
+//          ST1 P1 CRASH WITH ST2 P2 AFTER 1[s]
+//
+//              Line(234,678)(-187,  7)
+//              Line(400,521)( 847,-14)
+//
+//  Cross Point: (130733899/525172, 368568017/525172)
+//  S1         : (130733899/525172, 368568017/525172)(234,678) => (18631*sqrt(313741/2))/262586 => ST1Speed
+//  ST1Speed   : 28.101871181544118163337635663378800411770253641351348151517850477
+//  S2         : (130733899/525172, 368568017/525172)(847,-14) => (702655*sqrt(243017/2))/262586 => ST2Speed
+//  ST2Speed   : 932.76856843563533431751621294926189576847334687997823834628097353
+//
+        234,678   ,   -187, 7      ,  (18631*sqrt(313741/2))/262586, // TC99
+        400,521   ,    847,-14     , (702655*sqrt(243017/2))/262586, collisionYES,"ST1 P1 CRASH WITH ST2 P2 AFTER 1[s]",
+        234,678   ,   -187, 7      ,  (18631*sqrt(313741/2))/262586, // TC100
+        400,521   ,    847,-14     , (702660*sqrt(243017/2))/262586, collisionNO,"ST1 P1 CRASH WITH ST2 P2 AFTER 1[s]",
+       234,678   ,   -187, 7      ,  28.10187118154411816333763566337, // TC101
+       400,521   ,    847,-14     , 932.76856843563533431751621294926, collisionYES,"ST1 P1 CRASH WITH ST2 P2 AFTER 1[s]",
+       234,678   ,   -187, 7      ,  28.10187118154411816333763566337, // TC102
+       400,521   ,    847,-14     , 932.76857, collisionNO,"ST1 P1 CRASH WITH ST2 P2 AFTER 1[s]",
+       234,678   ,   -187, 7      ,  29, // TC103
+       400,521   ,    847,-14     , 932, collisionYES,"ST1 P1 CRASH WITH ST2 P2 AFTER 1[s]",
 
     };
-
-
-        //
-        //      TODO
-        //
-        //      DUZO TESTOW Z LINIAMI ROWNOLEGLYMI
-        //
 
 
 
