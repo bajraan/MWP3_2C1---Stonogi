@@ -2677,19 +2677,19 @@ int TEST__CheckMillipedeCollision(void)
         0, 5      ,      0, 8      ,   3   ,// TC44 kolizja w CP (0,0) 
         1,-1      ,      3,-3      ,   1   , collisionYES,"Similar coeficientds (A,B,C) ST1:(1,0,0)  ST2:(-1,-1,0)",
         
-       -1,-1      ,     -3,-3      ,   1   ,
+       -1,-1      ,     -3,-3      ,   1   ,// TC45
         1,-1      ,      3,-3      ,   3   , collisionYES,"Case form the internet",
         
-        1, 1      ,      3, 3      ,   1   ,
+        1, 1      ,      3, 3      ,   1   ,// TC46
        -1, 1      ,     -3, 3      ,   3   , collisionYES,"Case form the internet",
         
-        1, 1      ,     10,10      ,   1   ,
+        1, 1      ,     10,10      ,   1   ,// TC47
        -1, 1      ,    -10,10      ,  10   , collisionYES,"Case form the internet",
 
-        0,99999   ,      0,99998   ,   2   ,
+        0,99999   ,      0,99998   ,   2   ,// TC48
         0,0       ,      0,-100    ,100000 , collisionYES, "Collision at playZone border",
 
-    99999,99999   ,  99998,99998   ,sqrt(8)         ,
+    99999,99999   ,  99998,99998   ,sqrt(8)         ,// TC49
         0,0       ,   -100,-100    ,sqrt(2) * 1e5  , collisionYES, "Collision at playZone border",
 
 
@@ -2700,7 +2700,7 @@ int TEST__CheckMillipedeCollision(void)
       -90, 100000 ,     90,  100000,  100  , collisionNO,"Case form the internet",
         1, 100000 ,     -5,  100000,   3   ,// TC52
         1,-100000 ,     -5,-100000 ,   3   , collisionNO,"Case form the internet",
-                3, 0      ,      5,  0     ,   3   ,// TC53
+        3, 0      ,      5,  0     ,   3   ,// TC53
        10,-100000 ,     12,-100000 ,   4   , collisionNO,"Case form the internet",
         3, 7      ,      3,-7      ,   2   ,// TC54
         0,-5      ,      0, 5      ,   1   , collisionNO,"Case form the internet",
