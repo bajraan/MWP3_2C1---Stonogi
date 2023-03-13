@@ -12,6 +12,8 @@ with open("input.json", "r") as f:
     data = json.load(f)
     expected_values = [data[k]['Expected'] for k in data.keys()]
 
+num_items = len(data.keys())
+
 print(f"Data reading form stdout.txt file")
 df = pd.read_csv('stdout.txt', header=None)
 
@@ -30,11 +32,9 @@ with open("../70_Documentation/Logo.svg", "r") as file:
     # Join the remaining lines into a string
     Logo = "".join(file_lines)
 
-
 for key, value in data.items():
     pattern = f'({key}.*?opacity=")0.4(")'
     modified_file = re.sub(pattern, rf'\g<1>0.0"', modified_file)
-
 
 print(f"Checking results: ")
 for i, (value, expected) in enumerate(zip(df[0], expected_values)):
@@ -149,8 +149,6 @@ html = """
    
     <div id="logo">"""
 html+=Logo      
-    
-
 html+="""
   </div>
     <div id="Title">
@@ -160,7 +158,7 @@ html+="""
       <br><br> {date}
     </div>
 """.format(date=date)
-
+stdin = """<br> {num}""".format(num = num_items)
 idd = 0
 for key, value in data.items():
     ST1_P1X = value['wektorA_P1X']
@@ -233,6 +231,9 @@ for key, value in data.items():
               var ctx = canvas.getContext("2d");
               var wersalikhight = 20;
 
+              var scalefactor = 50;
+              if({s1p1x}>10 || {s1p1y}>10 || {s1p2x}>10 || {s1p2y}>10) scalefactor = 0.1
+
               // Axis X
               ctx.beginPath();
               ctx.moveTo(0, canvas.height/2);
@@ -244,7 +245,7 @@ for key, value in data.items():
               // Axis X descriptions
               for(var i = 50; i <= canvas.width; i += 50) 
               {{
-                  ctx.fillText((i - canvas.width/2)/50, i, canvas.height/2 + 20);
+                  ctx.fillText((i - canvas.width/2)/scalefactor, i, canvas.height/2 + 20);
               }}
 
               // Axis Y
@@ -258,13 +259,14 @@ for key, value in data.items():
               for(var i = 50; i <= canvas.height; i += 50) 
               {{
                   if(i != canvas.height/2) {{
-                      ctx.fillText((canvas.height/2 - i)/50, canvas.width/2 + 10, i);
+                      ctx.fillText((canvas.height/2 - i)/scalefactor, canvas.width/2 + 10, i);
                   }}
               }}
 
               // Grid
               ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
               ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+
               for(var i = 50; i <= canvas.width; i += 50)
               {{
               ctx.beginPath();
@@ -272,6 +274,7 @@ for key, value in data.items():
               ctx.lineTo(i, canvas.height);
               ctx.stroke();
               }}
+
               for(var i = 50; i <= canvas.height; i += 50)
               {{
               ctx.beginPath();
@@ -281,10 +284,10 @@ for key, value in data.items():
               }}
 
               // Stonoga 1
-              var startX =  ({s1p1x})*50+350;
-              var startY = -({s1p1y})*50+350;
-              var endX =    ({s1p2x})*50+350;;
-              var endY =   -({s1p2y})*50+350;;
+              var startX =  ({s1p1x})*scalefactor+350;
+              var startY = -({s1p1y})*scalefactor+350;
+              var endX =    ({s1p2x})*scalefactor+350;;
+              var endY =   -({s1p2y})*scalefactor+350;;
 
               // Vector Drawing
               ctx.beginPath();
@@ -318,10 +321,10 @@ for key, value in data.items():
               ctx.fillText(legend, 50, 50);
 
               //Stonoga 2
-              var startX =  ({s2p1x})*50+350;
-              var startY = -({s2p1y})*50+350;
-              var endX =    ({s2p2x})*50+350;;
-              var endY =   -({s2p2y})*50+350;;
+              var startX =  ({s2p1x})*scalefactor+350;
+              var startY = -({s2p1y})*scalefactor+350;
+              var endX =    ({s2p2x})*scalefactor+350;;
+              var endY =   -({s2p2y})*scalefactor+350;;
 
               //Vector Drawing
               ctx.beginPath();
@@ -335,9 +338,9 @@ for key, value in data.items():
               var angle = Math.atan2(endY - startY, endX - startX);
               var arrowSize = 20;
               ctx.beginPath();
-              ctx.moveTo(endX, endY);
-              ctx.lineTo(endX - arrowSize * Math.cos(angle - Math.PI / 6), endY - arrowSize * Math.sin(angle - Math.PI / 6));
-              ctx.lineTo(endX - arrowSize * Math.cos(angle + Math.PI / 6), endY - arrowSize * Math.sin(angle + Math.PI / 6));
+              ctx.moveTo(startX, startY);
+              ctx.lineTo(startX + arrowSize * Math.cos(angle - Math.PI / 6), startY + arrowSize * Math.sin(angle - Math.PI / 6));
+              ctx.lineTo(startX + arrowSize * Math.cos(angle + Math.PI / 6), startY + arrowSize * Math.sin(angle + Math.PI / 6));
               ctx.closePath();
               ctx.fillStyle = "blue";
               ctx.fill();
@@ -371,8 +374,7 @@ for key, value in data.items():
                 s2spe=ST2_spe,\
                 expected_result=Exp,\
                 observed_result=Obs,\
-                test_result=Res)
-    
+                test_result=Res)    
     html+=testcase
 
     pattern = f'({key}.*?opacity=")0.0(")'
@@ -386,12 +388,26 @@ for key, value in data.items():
     html+="""
         </div>
       </div> """
-    
+    stdin += """
+    <br> {s1p1x} {s1p1y} {s1p2x} {s1p2y} {s1spe}
+    <br> {s2p1x} {s2p1y} {s2p2x} {s2p2y} {s2spe}""".format(s1p1x=ST1_P1X,\
+                                                           s1p1y=ST1_P1Y,\
+                                                           s1p2x=ST1_P2X,\
+                                                           s1p2y=ST1_P2Y,\
+                                                           s2p1x=ST2_P1X,\
+                                                           s2p1y=ST2_P1Y,\
+                                                           s2p2x=ST2_P2X,\
+                                                           s2p2y=ST2_P2Y,\
+                                                           s1spe=ST1_spe,\
+                                                           s2spe=ST2_spe,)   
+
+
 html += "    <div id=summary>"
 html += orginal_file
 html += "</div>"
-
-
+html +="    <div id=summary>"
+html += stdin
+html +="</div>"
 html+="""
   </body>
 </html>"""

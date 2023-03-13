@@ -49,7 +49,7 @@ timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
 date = now.strftime("%Y-%m-%d")
 filename = f"AcceptanceLevel_TestRaport_{timestamp}.html"
 
-html = """
+html ="""
 <!DOCTYPE html>
 <html>
   <head>
@@ -149,8 +149,6 @@ html = """
    
     <div id="logo">"""
 html+=Logo      
-    
-
 html+="""
   </div>
     <div id="Title">
