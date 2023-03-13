@@ -156,6 +156,7 @@ html+="""
       <br><br> Test Raport
       <br><br> MWP3_2C1 - Stonogi
       <br><br> {date}
+      <br><br> SW Version: ???
     </div>
 """.format(date=date)
 stdin = """<br> {num}""".format(num = num_items)
