@@ -3,10 +3,6 @@ import datetime
 import pandas as pd
 import re
 
-now = datetime.datetime.now()
-timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
-filename = f"AcceptanceLevel_TestRaport_{timestamp}.html"
-
 print(f"Data reading form input.JSON file")
 with open("input.json", "r") as f:
     data = json.load(f)
@@ -47,7 +43,8 @@ print(f"Creating .HTML file")
 now = datetime.datetime.now()
 timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
 date = now.strftime("%Y-%m-%d")
-filename = f"AcceptanceLevel_TestRaport_{timestamp}.html"
+htmlFilename = f"AcceptanceLevel_TestRaport_{timestamp}.html"
+
 
 html = """
 <!DOCTYPE html>
@@ -81,6 +78,16 @@ html = """
       text-align: center;
       padding: 200px;
     }
+    #summary
+    {
+      margin-left: auto;
+      margin-right: auto;
+      font-size: 100px;
+      width: 1700px;
+      height: auto;
+      text-align: center;
+      vertical-align: middle;
+    }
     #tccontainer
     {
       width: 1700px;
@@ -105,15 +112,6 @@ html = """
       height:20px;
       vertical-align: middle;
     }
-    #summary
-    {
-      margin-left: auto;
-      margin-right: auto;
-      width: 1700px;
-      height:auto;
-      vertical-align: middle;
-    }
-
     #container_left
     {
       float: left;
@@ -159,7 +157,8 @@ html+="""
       <br><br> SW Version: ???
     </div>
 """.format(date=date)
-stdin = """<br> {num}""".format(num = num_items)
+stdin_html = """<br> {num}""".format(num = num_items)
+stdin_txt  = """{num}""".format(num = num_items)
 idd = 0
 for key, value in data.items():
     ST1_P1X = value['wektorA_P1X']
@@ -389,7 +388,7 @@ for key, value in data.items():
     html+="""
         </div>
       </div> """
-    stdin += """
+    stdin_html += """
     <br> {s1p1x} {s1p1y} {s1p2x} {s1p2y} {s1spe}
     <br> {s2p1x} {s2p1y} {s2p2x} {s2p2y} {s2spe}""".format(s1p1x=ST1_P1X,\
                                                            s1p1y=ST1_P1Y,\
@@ -400,18 +399,37 @@ for key, value in data.items():
                                                            s2p2x=ST2_P2X,\
                                                            s2p2y=ST2_P2Y,\
                                                            s1spe=ST1_spe,\
-                                                           s2spe=ST2_spe,)   
+                                                           s2spe=ST2_spe)   
+    stdin_txt += """
+{s1p1x} {s1p1y} {s1p2x} {s1p2y} {s1spe}
+{s2p1x} {s2p1y} {s2p2x} {s2p2y} {s2spe}""".format(s1p1x=ST1_P1X,\
+                                                      s1p1y=ST1_P1Y,\
+                                                      s1p2x=ST1_P2X,\
+                                                      s1p2y=ST1_P2Y,\
+                                                      s2p1x=ST2_P1X,\
+                                                      s2p1y=ST2_P1Y,\
+                                                      s2p2x=ST2_P2X,\
+                                                      s2p2y=ST2_P2Y,\
+                                                      s1spe=ST1_spe,\
+                                                      s2spe=ST2_spe)  
 
-
-html += "    <div id=summary>"
+html += """    <div id=summary>
+</br> Test Raport Summary"""
 html += orginal_file
 html += "</div>"
 html +="    <div id=summary>"
-html += stdin
+html += stdin_html
 html +="</div>"
 html+="""
   </body>
 </html>"""
 
-with open(filename, "w", encoding="utf-8") as f:
+
+with open(htmlFilename, "w", encoding="utf-8") as f:
     f.write(html)
+
+
+print(f"Creating stdin.txt file")
+stdin_txtFilename = f"stdin.txt"
+with open(stdin_txtFilename, "w", encoding="utf-8") as f:
+    f.write(stdin_txt)
