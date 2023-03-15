@@ -4,12 +4,12 @@
 #include <sstream>
 
 
-#define MODE_DEB     0
+#define MODE_DEB     1
 #define MODE_TEST    1
 #define PRINT_RAPORT 0
 
 
-#if     MODE_TEST == 1
+#if MODE_TEST == 1
 #include <windows.h>
 HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 #define TEST_PASS   SetConsoleTextAttribute(hConsole,10);cout<<"PASS";SetConsoleTextAttribute(hConsole,7);
@@ -19,9 +19,9 @@ HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 #define FATAL_ERROR__DetermineOverleap   SetConsoleTextAttribute(hConsole,12);cout<<"Fatal Error - DetermineOverleap()\n";SetConsoleTextAttribute(hConsole,7);
 #define FATAL_ERROR__DetermineSpeedSignCorrection   SetConsoleTextAttribute(hConsole,12);cout<<"Fatal Error - DetermineSpeedSignCorrection()\n";SetConsoleTextAttribute(hConsole,7);
 #define FATAL_ERROR__DetermineCrossDirection SetConsoleTextAttribute(hConsole,12);cout<<"Fatal Error - DetermineCrossDirection()\n";SetConsoleTextAttribute(hConsole,7);
-#endif
+#endif // MODE_TEST
 
-#if     PRINT_RAPORT == 1
+#if PRINT_RAPORT == 1
 #include <fstream>
 #include "printraport/printraport.h"
 #endif // PRINT_RAPORT
@@ -2511,7 +2511,7 @@ int TEST__CheckMillipedeCollision(void)
     string  TestDescriptions;
     };
 
-    int AmountOfTest = 103;
+    int AmountOfTest = 104;
     TESTTable TT[AmountOfTest] =
     {
     //=========================================================
@@ -2805,6 +2805,8 @@ int TEST__CheckMillipedeCollision(void)
         0, 100   ,      0,-100    ,   1   , collisionYES,"perpendicular BULLET",
        10, 0     ,     20, 0      , 100   , // TC98
        -1, 100   ,     -1,-100    ,   1   , collisionYES,"perpendicular BULLET",
+       4, -2     ,      6,      -2,  20001, // TC98+
+      -6, -2     ,     -4,      -2,  20000, collisionNO,"From Acceptance Level tests",
 
 
 //
@@ -2915,4 +2917,4 @@ int TEST__CheckMillipedeCollision(void)
     }   return -1;
 }
 
-#endif
+#endif // MODE_TEST

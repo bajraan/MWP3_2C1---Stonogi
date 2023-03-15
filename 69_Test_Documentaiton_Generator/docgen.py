@@ -3,6 +3,19 @@ import datetime
 import pandas as pd
 import re
 
+def remove_preproc(code):
+    lines = code.split('\n')
+    new_lines = []
+    skip_lines = False
+    for line in lines:
+        if line.startswith('#if MODE_TEST == 1'):
+            skip_lines = True
+        elif line.startswith('#endif // MODE_TEST'):
+            skip_lines = False
+        elif not skip_lines:
+            new_lines.append(line)
+    return '\n'.join(new_lines)
+
 print(f"Data reading form input.JSON file")
 with open("input.json", "r") as f:
     data = json.load(f)
@@ -44,7 +57,7 @@ now = datetime.datetime.now()
 timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
 date = now.strftime("%Y-%m-%d")
 htmlFilename = f"AcceptanceLevel_TestRaport_{timestamp}.html"
-
+maincppexportFilename = f"main_{timestamp}.cpp"
 
 html = """
 <!DOCTYPE html>
@@ -154,9 +167,9 @@ html+="""
       <br><br> Test Raport
       <br><br> MWP3_2C1 - Stonogi
       <br><br> {date}
-      <br><br> SW Version: ???
+      <br><br> SW Version: {maincppexportFilename}
     </div>
-""".format(date=date)
+""".format(date=date,maincppexportFilename=maincppexportFilename)
 stdin_html = """<br> {num}""".format(num = num_items)
 stdin_txt  = """{num}""".format(num = num_items)
 idd = 0
@@ -433,3 +446,13 @@ print(f"Creating stdin.txt file")
 stdin_txtFilename = f"stdin.txt"
 with open(stdin_txtFilename, "w", encoding="utf-8") as f:
     f.write(stdin_txt)
+
+
+print(f"Creating main.c export into 62_Tests_Acceptance_Level")
+with open('../main.cpp', 'r') as f:
+    code = f.read()
+
+new_code = remove_preproc(code)
+
+with open(maincppexportFilename, 'w') as f:
+    f.write(new_code)

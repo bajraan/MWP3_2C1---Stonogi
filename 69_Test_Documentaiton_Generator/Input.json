@@ -34,12 +34,12 @@
 		"wektorA_P1Y": -2,
 		"wektorA_P2X": 6,
 		"wektorA_P2Y": -2,
-		"wektorA_speed": 10001,
+		"wektorA_speed": 20001,
 		"wektorB_P1X": -6,
 		"wektorB_P1Y": -2,
 		"wektorB_P2X": -4,
 		"wektorB_P2Y": -2,
-		"wektorB_speed": 10000,
+		"wektorB_speed": 20000,
 		"Expected" : "NIE"
 	},
 	"BC04":
