@@ -289,6 +289,10 @@ int CHECK_MillipedeCollision(MILLPEDE *ST1, MILLPEDE *ST2)
                     Point h_collisionPoint = {Lincoltable[i].x,0};
                     TRANSFORM_PointToOriginal(ST1, sT, rT_Reet, h_collisionPoint);
                 }
+                else
+                {
+                    ST1->CrossPoint = {Lincoltable[i].x,0};
+                }
 
                 if
                 (
