@@ -5,7 +5,7 @@
 
 
 #define MODE_DEB     0
-#define MODE_TEST    1
+#define MODE_TEST    0
 #define PRINT_RAPORT 0
 
 
