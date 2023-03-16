@@ -4,7 +4,7 @@
 #include <sstream>
 
 
-#define MODE_DEB     1
+#define MODE_DEB     0
 #define MODE_TEST    1
 #define PRINT_RAPORT 0
 
@@ -2805,7 +2805,7 @@ int TEST__CheckMillipedeCollision(void)
         0, 100   ,      0,-100    ,   1   , collisionYES,"perpendicular BULLET",
        10, 0     ,     20, 0      , 100   , // TC98
        -1, 100   ,     -1,-100    ,   1   , collisionYES,"perpendicular BULLET",
-       4, -2     ,      6,      -2,  20001, // TC98+
+       4, -2     ,      6,      -2,  20001, // TC99
       -6, -2     ,     -4,      -2,  20000, collisionNO,"From Acceptance Level tests",
 
 
@@ -2824,15 +2824,15 @@ int TEST__CheckMillipedeCollision(void)
 //  S2         : (130733899/525172, 368568017/525172)(847,-14) => (702655*sqrt(243017/2))/262586 => ST2Speed
 //  ST2Speed   : 932.76856843563533431751621294926189576847334687997823834628097353
 //
-        234,678   ,   -187, 7      ,  (18631*sqrt(313741/2))/262586, // TC99
-        400,521   ,    847,-14     , (702655*sqrt(243017/2))/262586, collisionYES,"ST1 P1 CRASH WITH ST2 P2 AFTER 1[s]",
         234,678   ,   -187, 7      ,  (18631*sqrt(313741/2))/262586, // TC100
+        400,521   ,    847,-14     , (702655*sqrt(243017/2))/262586, collisionYES,"ST1 P1 CRASH WITH ST2 P2 AFTER 1[s]",
+        234,678   ,   -187, 7      ,  (18631*sqrt(313741/2))/262586, // TC101
         400,521   ,    847,-14     , (702660*sqrt(243017/2))/262586, collisionNO,"ST1 P1 CRASH WITH ST2 P2 AFTER 1[s]",
-       234,678   ,   -187, 7      ,  28.10187118154411816333763566337, // TC101
-       400,521   ,    847,-14     , 932.76856843563533431751621294926, collisionYES,"ST1 P1 CRASH WITH ST2 P2 AFTER 1[s]",
        234,678   ,   -187, 7      ,  28.10187118154411816333763566337, // TC102
+       400,521   ,    847,-14     , 932.76856843563533431751621294926, collisionYES,"ST1 P1 CRASH WITH ST2 P2 AFTER 1[s]",
+       234,678   ,   -187, 7      ,  28.10187118154411816333763566337, // TC103
        400,521   ,    847,-14     , 932.76857, collisionNO,"ST1 P1 CRASH WITH ST2 P2 AFTER 1[s]",
-       234,678   ,   -187, 7      ,  29, // TC103
+       234,678   ,   -187, 7      ,  29, // TC104
        400,521   ,    847,-14     , 932, collisionYES,"ST1 P1 CRASH WITH ST2 P2 AFTER 1[s]",
 
     };
