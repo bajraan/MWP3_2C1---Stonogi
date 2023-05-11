@@ -46,6 +46,10 @@
 
 ## Project Info
 ## Project Structure
+
+00_SPOJ_EXPORT     - Contains one main.cpp file, this file include truncated program prepared for SPOJ System
+60_Test_Unit_Level - Contains Test results from unit tests
+
 ## Main Algorithm
 
 Main algorithm to DETERMINE if millipedes will colloids each other at a specific zone. Main algorithm do not include loading data from stdin. stdin data loading functionality is realizing by main() function, Main algorithm refers only to the one test case scenario.
