@@ -54,8 +54,8 @@
 
 Main algorithm to DETERMINE if millipedes will colloids each other at a specific zone. Main algorithm do not include loading data from stdin. stdin data loading functionality is realizing by main() function, Main algorithm refers only to the one test case scenario.
 <div align="center">
-<img src="/70_Documentation/MainAlgorithm.drawio.png" alt="Alt text" title="Optional title">
-<img src="/70_Documentation/MainAlgorithm_BC_Coverage.png" alt="Alt text" title="Optional title">
+<img src="/70_Documentation/Logo.svg" alt="Alt text" title="Optional title">
+<img src="/70_Documentation/MainAlgorithm_BC.drawio.svg" alt="Alt text" title="Optional title">
 </div>
 
 <br/>
