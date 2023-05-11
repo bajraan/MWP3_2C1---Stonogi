@@ -33,7 +33,7 @@
   <ol>
     <li><a href="## Project Info">Project Info</a></li>
     <li><a href="## Project Structure">Project Structure</a></li>
-    <li><a href="## Main Algorithm">Main algorithm</a></li>
+    <li><a href="## Project Details">Project Details</a></li>
     <li><a href="## Tests">Tests</a></li>
     <li><a href="## Links">Links</a></li>
     <li><a href="#contributing">Contributing</a></li>
@@ -50,7 +50,7 @@
 00_SPOJ_EXPORT     - Contains one main.cpp file, this file include truncated program prepared for SPOJ System
 60_Test_Unit_Level - Contains Test results from unit tests
 
-## Main Algorithm
+## Project Details
 
 Main algorithm to DETERMINE if millipedes will colloids each other at a specific zone. Main algorithm do not include loading data from stdin. stdin data loading functionality is realizing by main() function, Main algorithm refers only to the one test case scenario.
 <div align="center">
@@ -66,7 +66,7 @@ Main algorithm to DETERMINE if millipedes will colloids each other at a specific
 
 This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
 
-* [![Next][Next.js]][Next-url]
+* [![Next][draw.io]][draw-url]
 * [![React][React.js]][React-url]
 * [![Vue][Vue.js]][Vue-url]
 * [![Angular][Angular.io]][Angular-url]
@@ -174,8 +174,8 @@ $${\color{red}ATTENTION}$$
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/othneildrew
 [product-screenshot]: images/screenshot.png
-[Next.js]: https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white
-[Next-url]: https://nextjs.org/
+[draw.io]: https://img.shields.io/badge/draw.io-F08705?style=for-the-badge&logo=diagrams.net&logoColor=white
+[draw-url]: https://www.drawio.com/
 [React.js]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
 [React-url]: https://reactjs.org/
 [Vue.js]: https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D
