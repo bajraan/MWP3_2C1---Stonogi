@@ -270,7 +270,61 @@
         </tr>
       </table>
 
-      <br><br><br>
+      <br><br>
+      <div>
+        <canvas id="myChart" width="400" height="400"></canvas>
+        <div id="chartInfo">
+          <p id="totalTests"></p>
+          <p id="failedTests"></p>
+        </div>
+      </div>
+    
+      <script>
+        // Dane dla wykresu
+        var totalTests = 40;
+        var failedTests = 13;
+    
+        // Pobierz referencje do element¢w HTML
+        var canvas = document.getElementById('myChart');
+        var ctx = canvas.getContext('2d');
+        var totalTestsInfo = document.getElementById('totalTests');
+        var failedTestsInfo = document.getElementById('failedTests');
+    
+        // Oblicz pozostaˆe testy
+        var passedTests = totalTests - failedTests;
+    
+        // Wy˜wietl informacje o testach
+        totalTestsInfo.textContent = totalTests + ' test cases executed';
+        failedTestsInfo.textContent = failedTests + ' test cases failed';
+    
+        // Parametry wykresu
+        var centerX = canvas.width / 2;
+        var centerY = canvas.height / 2;
+        var radius = Math.min(centerX, centerY) - 20;
+    
+        // Narysuj wykres koˆowy
+        var startAngle = 0;
+    
+        // Narysuj sektor dla test¢w zaliczonych
+        var passedAngle = (2 * Math.PI * passedTests) / totalTests;
+        ctx.beginPath();
+        ctx.fillStyle = 'green';
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + passedAngle);
+        ctx.closePath();
+        ctx.fill();
+        startAngle += passedAngle;
+    
+        // Narysuj sektor dla test¢w niezaliczonych
+        var failedAngle = (2 * Math.PI * failedTests) / totalTests;
+        ctx.beginPath();
+        ctx.fillStyle = 'red';
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + failedAngle);
+        ctx.closePath();
+        ctx.fill();
+      </script>
+      <br><br>
 
       <table>
         <tr>
@@ -298,6 +352,10 @@
           <td>3 min 10 sek</td>
         </tr>
       </table>
+
+     
+      
+
     </div> 
 
     <div id="tccontainer">
