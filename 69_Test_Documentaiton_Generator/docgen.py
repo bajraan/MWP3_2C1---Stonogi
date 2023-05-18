@@ -141,7 +141,7 @@ html = """
     }
     #details
     {
-      float: none
+      float: none;
       height: 1200px;
       padding: 50px
     }
