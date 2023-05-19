@@ -71,12 +71,24 @@
       height: 2350px;
       font-size: 1.2cm;
     }
+    #container_left_tab
+    {
+      float: left;
+      width: 1100px;
+      height: auto;
+      font-size: 20px;
+    }
     #container_right
     {
       float: left;
       width: 500px;
       height: 1500px;
-      background-color: green;
+    }
+    #container_right_tab
+    {
+      float: left;
+      width: 500px;
+      height: auto;
     }
     #details
     {
@@ -268,17 +280,22 @@
           <td>SW Version</td>
           <td>main_2023-05-18_16-19-10.cpp</td>
         </tr>
+        <tr>
+          <td>Result</td>
+          <td class="pass">Pass</td>
+        </tr>
+        <tr>
+          <td>
+              executed:200 <br>
+              pass: 30 <br>
+              failed: 100
+          </td>
+          <td>
+            <canvas id="myChart" width="400" height="400"></canvas>
+          </td>
+        </tr>
       </table>
 
-      <br><br>
-      <div>
-        <canvas id="myChart" width="400" height="400"></canvas>
-        <div id="chartInfo">
-          <p id="totalTests"></p>
-          <p id="failedTests"></p>
-        </div>
-      </div>
-    
       <script>
         // Dane dla wykresu
         var totalTests = 40;
@@ -292,11 +309,7 @@
     
         // Oblicz pozostaˆe testy
         var passedTests = totalTests - failedTests;
-    
-        // Wy˜wietl informacje o testach
-        totalTestsInfo.textContent = totalTests + ' test cases executed';
-        failedTestsInfo.textContent = failedTests + ' test cases failed';
-    
+      
         // Parametry wykresu
         var centerX = canvas.width / 2;
         var centerY = canvas.height / 2;
