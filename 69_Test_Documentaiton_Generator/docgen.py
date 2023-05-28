@@ -59,14 +59,19 @@ date = now.strftime("%Y-%m-%d")
 htmlFilename = f"AcceptanceLevel_TestRaport_{timestamp}.html"
 maincppexportFilename = f"main_{timestamp}.cpp"
 
+html_fcon = """
+    <div id="Title">
+      <table>
+        <tr>
+          <th>Numer testu</th>
+          <th>Link do testu</th>
+          <th>Rezultat testu</th>
+          <th>Czas wykonania</th>
+        </tr>"""
 html = """
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>Test Raport Acceptance Level</title>
-
-    <style>
+  <style>
 
     body {
         background-color: #f2f2f2;
@@ -74,7 +79,7 @@ html = """
 
     #logo
     {
-      width: 1700px;
+      width: 2000px;
       height: auto;
       background-color: #f2f2f2;
       margin-left: auto;
@@ -82,48 +87,30 @@ html = """
     }
     #Title
     {
-      width: 1700px;
+      width: 2000px;
       height: auto;
       background-color: #f2f2f2;
       margin-left: auto;
       margin-right: auto;
       font-size: 100px;
       text-align: center;
-      padding: 200px;
     }
     #summary
     {
+      width: 2000px;
+      height: auto;
       margin-left: auto;
       margin-right: auto;
       font-size: 100px;
-      width: 1700px;
-      height: auto;
       text-align: center;
       vertical-align: middle;
     }
     #tccontainer
     {
-      width: 1700px;
+      width: 2000px;
       height:2600px;
       margin-left: auto;
       margin-right: auto;
-    }
-    #space_black
-    {
-      margin-left: auto;
-      margin-right: auto;
-      width: 1700px;
-      height:20px;
-      background-color: #f2f2f2;
-      vertical-align: middle;
-    }
-	  #space_white
-    {
-      margin-left: auto;
-      margin-right: auto;
-      width: 1700px;
-      height:20px;
-      vertical-align: middle;
     }
     #container_left
     {
@@ -132,12 +119,24 @@ html = """
       height: 2350px;
       font-size: 1.2cm;
     }
+    #container_left_tab
+    {
+      float: left;
+      width: 1100px;
+      height: auto;
+      font-size: 20px;
+    }
     #container_right
     {
       float: left;
-      width: 500px;
+      width: 1250px;
       height: 1500px;
-      background-color: green;
+    }
+    #container_right_tab
+    {
+      float: left;
+      width: 500px;
+      height: auto;
     }
     #details
     {
@@ -153,26 +152,132 @@ html = """
     align-items: center;
     }
 
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      font-size: 30px ;
+    }
+
+    th, td {
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+      font-size: 40px;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    tr:hover {
+      color: black;
+      font-weight: bold;
+    }
+
+    .pass {
+      background-color: green;
+
+    }
+
+    .fail {
+      background-color: red;
+    }
+
     </style>
-  </head>
 
   <body>
-   
     <div id="logo">"""
-html+=Logo      
+#html+=Logo      
 html+="""
-  </div>
-    <div id="Title">
+</div>
+
+<div id="Title">
+      <br><br><br>
       Acceptance Level
-      <br><br> Test Raport
-      <br><br> MWP3_2C1 - Stonogi
-      <br><br> {date}
-      <br><br> SW Version: {maincppexportFilename}
-    </div>
+      <br> Test Raport
+      <br><br><br>
+
+      <table>
+        <tr>
+          <td>Project Name</td>
+          <td>MWP3_2C1 - Stonogi</td>
+        </tr>
+        <tr>
+          <td>Date</td>
+          <td>{date}</td>
+        </tr>
+        <tr>
+          <td>SW Version</td>
+          <td>{maincppexportFilename}</td>
+        </tr>
+        <tr>
+          <td>Result</td>
+          <td class="pass">Pass</td>
+        </tr>
+        <tr>
+          <td>
+              executed:200 <br>
+              pass: 30 <br>
+              failed: 100
+          </td>
+          <td>
+            <canvas id="myChart" width="400" height="400"></canvas>
+          </td>
+        </tr>
+      </table>
+      <br><br><br>
+
+  <script>
+        // Chart Data
+        var totalTests = 40;
+        var failedTests = 13;
+    
+        // html references get
+        var canvas = document.getElementById('myChart');
+        var ctx = canvas.getContext('2d');
+        var totalTestsInfo = document.getElementById('totalTests');
+        var failedTestsInfo = document.getElementById('failedTests');
+    
+        // Rest of test calculation
+        var passedTests = totalTests - failedTests;
+      
+        // Chart Parameters
+        var centerX = canvas.width / 2;
+        var centerY = canvas.height / 2;
+        var radius = Math.min(centerX, centerY) - 20;
+    
+        // Draw a circle chart
+        var startAngle = 0;
+    
+        // Draw a sector for passed Test Cases
+        var passedAngle = (2 * Math.PI * passedTests) / totalTests;
+        ctx.beginPath();
+        ctx.fillStyle = 'green';
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + passedAngle);
+        ctx.closePath();
+        ctx.fill();
+        startAngle += passedAngle;
+    
+        // Draw a sector for failed Test Cases
+        var failedAngle = (2 * Math.PI * failedTests) / totalTests;
+        ctx.beginPath();
+        ctx.fillStyle = 'red';
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + failedAngle);
+        ctx.closePath();
+        ctx.fill();
+    </script>
+</div>
 """.format(date=date,maincppexportFilename=maincppexportFilename)
 stdin_html = """<br> {num}""".format(num = num_items)
 stdin_txt  = """{num}""".format(num = num_items)
 idd = 0
+AmofPass = 0;
+AmofFail = 0;
+AmofLack = 0;
 for key, value in data.items():
     ST1_P1X = value['wektorA_P1X']
     ST1_P1Y = value['wektorA_P1Y']
@@ -193,23 +298,24 @@ for key, value in data.items():
 
     if df.iloc[idd, 0] == "???":
         Res = """
-        <div style="font-weight:bold;background-color:black;color:red;padding:2%;">UNKNOWN</div>"""
+            <div style="font-weight:bold;background-color:black;color:red;padding:2%;">UNKNOWN</div>"""
+        AmofLack += 1
     elif expected_values[idd] == df.iloc[idd, 0]:
         Res = """
-        <div style="font-weight:bold;background-color:green;color:orange;padding:2%;">PASSED</div>"""
+            <div style="font-weight:bold;background-color:green;color:orange;padding:2%;">PASSED</div>"""
+        AmofPass += 1
     else:
         Res = """
-        <div style="font-weight:bold;background-color:red;color:black;padding:2%;">FAILED</div>"""
+            <div style="font-weight:bold;background-color:red;color:black;padding:2%;">FAILED</div>"""
+        AmofFail += 1
 
     idd+=1   
 
     testcase = """
-    <div id="tccontainer">
 
-      <div id="space_black">
-      </div>
-      <div id="space_white">
-      </div>
+    <h2 id="{name}"></h2>	
+    
+    <div id="tccontainer">
 
       <div id="container_left">
 
@@ -389,6 +495,16 @@ for key, value in data.items():
                 observed_result=Obs,\
                 test_result=Res)    
     html+=testcase
+    spistresci = """
+         <tr>
+          <td>{idd}</td>
+          <td><a href="#{name}">{name}</a></td>
+          <td class="pass">Pass</td>
+          <td>2 min 30 sek</td>
+        </tr>""".format(idd=idd,
+                        name = key)
+    html_fcon+=spistresci
+
 
     pattern = f'({key}.*?opacity=")0.0(")'
     modified_file = re.sub(pattern, rf'\g<1>1.0"', modified_file)
@@ -425,6 +541,10 @@ for key, value in data.items():
                                                       s2p2y=ST2_P2Y,\
                                                       s1spe=ST1_spe,\
                                                       s2spe=ST2_spe)  
+html_fcon+="""      </table>
+    <br><br>
+    </div>
+"""
 
 html += """    <div id=summary>
 </br> Test Raport Summary"""
@@ -434,8 +554,96 @@ html +="    <div id=summary>"
 html += stdin_html
 html +="</div>"
 html+="""
-  </body>
+
+<div id="Title">
+      <br><br><br>
+      Acceptance Level
+      <br> Test Raport
+      <br><br><br>
+
+      <table>
+        <tr>
+          <td>Project Name</td>
+          <td>MWP3_2C1 - Stonogi</td>
+        </tr>
+        <tr>
+          <td>Date</td>
+          <td>xxx</td>
+        </tr>
+        <tr>  
+          <td>SW Version</td>
+          <td>xxx</td>
+        </tr>
+        <tr>
+          <td>Result</td>
+          <td class="pass">Pass</td>
+        </tr>
+        <tr>
+          <td>
+              executed:{AmofPass} + {AmofPass} <br>
+              passed: {AmofPass} <br>
+              failed: {AmofFail}
+          </td>
+          <td>
+            <canvas id="myChart2" width="400" height="400"></canvas>
+          </td>
+        </tr>
+      </table>
+      <br><br><br>
+
+  <script>
+        // Chart Data
+        var totalTests  = {AmofPass} + {AmofFail} + {AmofLack};
+        var failedTests = {AmofFail};
+        var passedTests = {AmofPass};
+        var nonresTests = {AmofLack}; 
+    
+        // html references get
+        var canvas = document.getElementById('myChart2');
+        var ctx = canvas.getContext('2d');
+        var totalTestsInfo = document.getElementById('totalTests');
+        var failedTestsInfo = document.getElementById('failedTests');
+    
+        // Rest of test calculation
+        var passedTests = totalTests - failedTests;
+      
+        // Chart Parameters
+        var centerX = canvas.width / 2;
+        var centerY = canvas.height / 2;
+        var radius = Math.min(centerX, centerY) - 20;
+    
+        // Draw a circle chart
+        var startAngle = 0;
+    
+        // Draw a sector for passed Test Cases
+        var passedAngle = (2 * Math.PI * passedTests) / totalTests;
+        ctx.beginPath();
+        ctx.fillStyle = 'green';
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + passedAngle);
+        ctx.closePath();
+        ctx.fill();
+        startAngle += passedAngle;
+    
+        // Draw a sector for failed Test Cases
+        var failedAngle = (2 * Math.PI * failedTests) / totalTests;
+        ctx.beginPath();
+        ctx.fillStyle = 'red';
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, startAngle + failedAngle);
+        ctx.closePath();
+        ctx.fill();
+    </script>
+</div>""".format ( AmofLack=AmofLack,
+                    AmofPass=AmofPass,
+                    AmofFail=AmofFail )
+html+=html_fcon
+html+="""  </body>
 </html>"""
+
+
+
+
 
 
 with open(htmlFilename, "w", encoding="utf-8") as f:
