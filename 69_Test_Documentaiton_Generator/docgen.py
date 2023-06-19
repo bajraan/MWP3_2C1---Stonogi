@@ -59,16 +59,8 @@ date = now.strftime("%Y-%m-%d")
 htmlFilename = f"AcceptanceLevel_TestRaport_{timestamp}.html"
 maincppexportFilename = f"main_{timestamp}.cpp"
 
-html_fcon = """
-    <div id="Title">
-      <table>
-        <tr>
-          <th>Numer testu</th>
-          <th>Link do testu</th>
-          <th>Rezultat testu</th>
-          <th>Czas wykonania</th>
-        </tr>"""
-html = """
+
+html_1_Logo       = """
 <!DOCTYPE html>
 <html>
   <style>
@@ -188,11 +180,9 @@ html = """
     </style>
 
   <body>
-    <div id="logo">"""
-#html+=Logo      
-html+="""
-</div>
-
+<div id="logo">
+</div>"""
+html_2_Title      = """
 <div id="Title">
       <br><br><br>
       Acceptance Level
@@ -272,8 +262,23 @@ html+="""
     </script>
 </div>
 """.format(date=date,maincppexportFilename=maincppexportFilename)
+html_3_fcon       = """
+    <div id="Title">
+      <table>
+        <tr>
+          <th>Numer testu</th>
+          <th>Link do testu</th>
+          <th>Rezultat testu</th>
+          <th>Czas wykonania</th>
+        </tr>"""
+html_4_TestCases  = """"""   
+html_5_Summary    = """"""
+
+
 stdin_html = """<br> {num}""".format(num = num_items)
 stdin_txt  = """{num}""".format(num = num_items)
+
+
 idd = 0
 AmofPass = 0;
 AmofFail = 0;
@@ -311,7 +316,7 @@ for key, value in data.items():
 
     idd+=1   
 
-    testcase = """
+    html_tmp_testcase = """
 
     <h2 id="{name}"></h2>	
     
@@ -494,8 +499,8 @@ for key, value in data.items():
                 expected_result=Exp,\
                 observed_result=Obs,\
                 test_result=Res)    
-    html+=testcase
-    spistresci = """
+    html_4_TestCases+=html_tmp_testcase
+    html_tmp_spistresci = """
          <tr>
           <td>{idd}</td>
           <td><a href="#{name}">{name}</a></td>
@@ -503,18 +508,17 @@ for key, value in data.items():
           <td>2 min 30 sek</td>
         </tr>""".format(idd=idd,
                         name = key)
-    html_fcon+=spistresci
-
+    html_3_fcon+=html_tmp_spistresci
 
     pattern = f'({key}.*?opacity=")0.0(")'
     modified_file = re.sub(pattern, rf'\g<1>1.0"', modified_file)
 
-    html+=modified_file
+    html_4_TestCases+=modified_file
 
     pattern = f'({key}.*?opacity=")1.0(")'
     modified_file = re.sub(pattern, rf'\g<1>0.0"', modified_file)
 
-    html+="""
+    html_4_TestCases+="""
         </div>
       </div> """
     stdin_html += """
@@ -541,19 +545,23 @@ for key, value in data.items():
                                                       s2p2y=ST2_P2Y,\
                                                       s1spe=ST1_spe,\
                                                       s2spe=ST2_spe)  
-html_fcon+="""      </table>
+
+
+
+
+
+html_3_fcon+="""      </table>
     <br><br>
     </div>
 """
-
-html += """    <div id=summary>
+html_5_Summary += """    <div id=summary>
 </br> Test Raport Summary"""
-html += orginal_file
-html += "</div>"
-html +="    <div id=summary>"
-html += stdin_html
-html +="</div>"
-html+="""
+html_5_Summary += orginal_file
+html_5_Summary += "</div>"
+html_5_Summary +="    <div id=summary>"
+html_5_Summary += stdin_html
+html_5_Summary +="</div>"
+html_2_Title   +="""
 
 <div id="Title">
       <br><br><br>
@@ -637,14 +645,14 @@ html+="""
 </div>""".format ( AmofLack=AmofLack,
                     AmofPass=AmofPass,
                     AmofFail=AmofFail )
-html+=html_fcon
-html+="""  </body>
+html_5_Summary +="""  </body>
 </html>"""
 
-
-
-
-
+html = html_1_Logo
+html+= html_2_Title
+html+= html_3_fcon
+html+= html_4_TestCases
+html+= html_5_Summary
 
 with open(htmlFilename, "w", encoding="utf-8") as f:
     f.write(html)
