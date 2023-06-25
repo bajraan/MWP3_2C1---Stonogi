@@ -182,98 +182,18 @@ html_1_Logo       = """
   <body>
 <div id="logo">
 </div>"""
-html_2_Title      = """
-<div id="Title">
-      <br><br><br>
-      Acceptance Level
-      <br> Test Raport
-      <br><br><br>
-
-      <table>
-        <tr>
-          <td>Project Name</td>
-          <td>MWP3_2C1 - Stonogi</td>
-        </tr>
-        <tr>
-          <td>Date</td>
-          <td>{date}</td>
-        </tr>
-        <tr>
-          <td>SW Version</td>
-          <td>{maincppexportFilename}</td>
-        </tr>
-        <tr>
-          <td>Result</td>
-          <td class="pass">Pass</td>
-        </tr>
-        <tr>
-          <td>
-              executed:200 <br>
-              pass: 30 <br>
-              failed: 100
-          </td>
-          <td>
-            <canvas id="myChart" width="400" height="400"></canvas>
-          </td>
-        </tr>
-      </table>
-      <br><br><br>
-
-  <script>
-        // Chart Data
-        var totalTests = 40;
-        var failedTests = 13;
-    
-        // html references get
-        var canvas = document.getElementById('myChart');
-        var ctx = canvas.getContext('2d');
-        var totalTestsInfo = document.getElementById('totalTests');
-        var failedTestsInfo = document.getElementById('failedTests');
-    
-        // Rest of test calculation
-        var passedTests = totalTests - failedTests;
-      
-        // Chart Parameters
-        var centerX = canvas.width / 2;
-        var centerY = canvas.height / 2;
-        var radius = Math.min(centerX, centerY) - 20;
-    
-        // Draw a circle chart
-        var startAngle = 0;
-    
-        // Draw a sector for passed Test Cases
-        var passedAngle = (2 * Math.PI * passedTests) / totalTests;
-        ctx.beginPath();
-        ctx.fillStyle = 'green';
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, radius, startAngle, startAngle + passedAngle);
-        ctx.closePath();
-        ctx.fill();
-        startAngle += passedAngle;
-    
-        // Draw a sector for failed Test Cases
-        var failedAngle = (2 * Math.PI * failedTests) / totalTests;
-        ctx.beginPath();
-        ctx.fillStyle = 'red';
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, radius, startAngle, startAngle + failedAngle);
-        ctx.closePath();
-        ctx.fill();
-    </script>
-</div>
-""".format(date=date,maincppexportFilename=maincppexportFilename)
+html_2_Title      = """"""
 html_3_fcon       = """
     <div id="Title">
       <table>
         <tr>
-          <th>Numer testu</th>
-          <th>Link do testu</th>
-          <th>Rezultat testu</th>
-          <th>Czas wykonania</th>
+          <th>Lp</th>
+          <th>Test Name</th>
+          <th>Test Result</th>
+          <th>Test Duration</th>
         </tr>"""
 html_4_TestCases  = """"""   
 html_5_Summary    = """"""
-
 
 stdin_html = """<br> {num}""".format(num = num_items)
 stdin_txt  = """{num}""".format(num = num_items)
@@ -576,11 +496,11 @@ html_2_Title   +="""
         </tr>
         <tr>
           <td>Date</td>
-          <td>xxx</td>
+          <td>{date}</td>
         </tr>
-        <tr>  
+        <tr>
           <td>SW Version</td>
-          <td>xxx</td>
+          <td>{maincppexportFilename}</td>
         </tr>
         <tr>
           <td>Result</td>
@@ -642,9 +562,13 @@ html_2_Title   +="""
         ctx.closePath();
         ctx.fill();
     </script>
-</div>""".format ( AmofLack=AmofLack,
-                    AmofPass=AmofPass,
-                    AmofFail=AmofFail )
+</div>""".format( 
+                date=date,
+                maincppexportFilename = maincppexportFilename,
+                AmofLack=AmofLack,
+                AmofPass=AmofPass,
+                AmofFail=AmofFail 
+                )
 html_5_Summary +="""  </body>
 </html>"""
 
